@@ -24,9 +24,16 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
     """ """
     print(f"barrels delievered: {barrels_delivered} order_id: {order_id}")
 
-    # with db.engine.begin() as connection:
-    #     result = connection.execute(sqlalchemy.text("SELECT num_green_potions FROM global_inventory")).scalar_one()
+    t = sqlalchemy.text("UPDATE global_inventory SET num_green_ml = num_green_ml + :ml, gold = gold - :price")
+    ml = 0
+    price = 0
+    for barrel in barrels_delivered:
+        ml += barrel.ml_per_barrel * barrel.quantity
+        price += barrel.price * barrel.quantity
+        with db.engine.begin() as connection:
+            connection.execute(t, ml=ml, price=price)
 
+    
     return "OK"
 
 # Gets called once a day
