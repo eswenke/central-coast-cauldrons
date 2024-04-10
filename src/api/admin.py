@@ -20,7 +20,7 @@ def reset():
     with db.engine.begin() as connection:
         connection.execute(
             sqlalchemy.text(
-                "UPDATE global_inventory SET num_green_ml = 0, gold = 100, num_green_potions = 0"
+                "UPDATE global_inventory SET num_green_ml = 0, num_green_potions = 0, gold = 100"
             )
         )
 
