@@ -32,7 +32,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
             sqlalchemy.text(
                 "UPDATE global_inventory SET num_green_ml = num_green_ml - "
                 + str(ml)
-                + ", potions = potions + "
+                + ", num_green_potions = num_green_potions + "
                 + str(potions)
             )
         )
