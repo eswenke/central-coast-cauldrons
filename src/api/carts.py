@@ -98,10 +98,22 @@ def post_visits(visit_id: int, customers: list[Customer]):
 def create_cart(new_cart: Customer):
     """ """
 
+    # ADD A NEW TABLE TO THE DB TO STORE:
+    # NEXT CART_ID (ask about how to generate, mayber an INSERT will do it for me)
+    # A BUNCH OF ITEMS (item_sku) (ASK PIERCE ABOUT THIS/HOW TO REPRESENT IN SUPABASE)
+    # QUANTITY (get from cart item)
+    #
+
     # with db.engine.begin() as connection:
     #     result = connection.execute(sqlalchemy.text("SELECT num_green_potions FROM global_inventory")).scalar_one()
 
     return {"cart_id": 1}
+
+    # need two new tables, research how to do a foreign key reference.
+    # cart id table, wil lhave a foreign key reference to the table with the potions
+    # cart items table, for each different potion type, how much for quantity
+
+    # one insert for new cart, one insert statement for set item quantity
 
 
 class CartItem(BaseModel):
@@ -111,6 +123,10 @@ class CartItem(BaseModel):
 @router.post("/{cart_id}/items/{item_sku}")
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     """ """
+
+    # UPDATE THE CART ITEMS LIST TO ADD THIS ITEM AND ITS QUANTITY
+    # IF THEY GET THIS FAR, DO THEY HAVE TO CHECKOUT? CAN IT BE NEGATIVE QUANTITY?
+    # OR SHOULD I CHANGE THE QUANITY IN THE ACTUAL CHECKOUT
 
     with db.engine.begin() as connection:
         connection.execute(
@@ -129,6 +145,8 @@ class CartCheckout(BaseModel):
 @router.post("/{cart_id}/checkout")
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
+
+    # EDIT MY GOLD
 
     with db.engine.begin() as connection:
         connection.execute(

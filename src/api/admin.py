@@ -17,6 +17,9 @@ def reset():
     inventory, and all barrels are removed from inventory. Carts are all reset.
     """
 
+    # EDIT SO THAT RED BLUE AND GREEN POTIONS AND ML ALL RESET AS WELL
+    # when cart table is implemented, make sure to ERASE ALL ORDER ID's???
+
     with db.engine.begin() as connection:
         connection.execute(
             sqlalchemy.text(
@@ -25,4 +28,3 @@ def reset():
         )
 
     return "OK"
-

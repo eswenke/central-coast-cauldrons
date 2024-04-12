@@ -11,6 +11,9 @@ def get_catalog():
     Each unique item combination must have only a single price.
     """
 
+    # OFFER ALL GREEN AND RED AND BLUE POTIONS, (ADD THOSE RED AND BLUE COLUMNS TO THE DB)
+    # MAKE THEM CHEAP TO TEST
+
     with db.engine.begin() as connection:
         result = connection.execute(
             sqlalchemy.text("SELECT num_green_potions FROM global_inventory")
