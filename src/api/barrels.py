@@ -56,9 +56,12 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             sqlalchemy.text("SELECT num_green_potions FROM global_inventory")
         ).scalar_one()
 
-    return [
-        {
-            "sku": "SMALL_GREEN_BARREL",
-            "quantity": 1 if result < 10 else 0,
-        }
-    ]
+    if result < 10:
+        return [
+            {
+                "sku": "SMALL_GREEN_BARREL",
+                "quantity": 1,
+            }
+        ]
+    else:
+        return []

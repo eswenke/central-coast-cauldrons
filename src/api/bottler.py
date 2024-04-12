@@ -57,12 +57,15 @@ def get_bottle_plan():
             sqlalchemy.text("SELECT num_green_ml FROM global_inventory")
         ).scalar_one()
 
-    return [
-        {
-            "potion_type": [0, 100, 0, 0],
-            "quantity": result // 100,
-        }
-    ]
+    if result // 100 == 0:
+        return [
+            {
+                "potion_type": [0, 100, 0, 0],
+                "quantity": result // 100,
+            }
+        ]
+    else:
+        return []
 
 
 if __name__ == "__main__":
