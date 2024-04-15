@@ -128,12 +128,10 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     # IF THEY GET THIS FAR, DO THEY HAVE TO CHECKOUT? CAN IT BE NEGATIVE QUANTITY?
     # OR SHOULD I CHANGE THE QUANITY IN THE ACTUAL CHECKOUT
 
-    with db.engine.begin() as connection:
-        connection.execute(
-            sqlalchemy.text(
-                "UPDATE global_inventory SET num_green_potions = num_green_potions - 1"
-            )
-        )
+    # with db.engine.begin() as connection:
+    #     connection.execute(
+    #         sqlalchemy.text()
+    #     )
 
     return "OK"
 
@@ -150,7 +148,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
 
     with db.engine.begin() as connection:
         connection.execute(
-            sqlalchemy.text("UPDATE global_inventory SET gold = gold + 1")
+            sqlalchemy.text("UPDATE global_inventory SET gold = gold + 1, num_green_potions = num_green_potions - 1")
         )
 
     return {"total_potions_bought": 1, "total_gold_paid": 1}

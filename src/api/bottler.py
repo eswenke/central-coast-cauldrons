@@ -53,7 +53,7 @@ def get_bottle_plan():
     with db.engine.begin() as connection:
         result = connection.execute(
             sqlalchemy.text("SELECT num_green_ml FROM global_inventory")
-        ).scalar_one()
+        ).first()[0]
         result = result // 100
 
     if result != 0:
@@ -65,7 +65,6 @@ def get_bottle_plan():
         ]
     else:
         return []
-
 
 
 if __name__ == "__main__":

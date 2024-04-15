@@ -58,8 +58,8 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     with db.engine.begin() as connection:
         result = connection.execute(
             sqlalchemy.text("SELECT num_green_potions, gold FROM global_inventory")
-        )
-        potions, gold = result.first()
+        ).first()
+        potions, gold = result
         plan = []
         for barrel in wholesale_catalog:
             if barrel.sku == "SMALL_GREEN_BARREL":

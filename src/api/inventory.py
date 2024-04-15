@@ -18,11 +18,8 @@ def get_inventory():
     # EDIT SO THAT WE ADD THE ML AND POTIONS FROM RED AND BLUE AS WELL
 
     with db.engine.begin() as connection:
-        num_pots = connection.execute(sqlalchemy.text("SELECT num_green_potions FROM global_inventory")).scalar_one()
-        num_ml = connection.execute(sqlalchemy.text("SELECT num_green_ml FROM global_inventory")).scalar_one()
-        num_gold = connection.execute(sqlalchemy.text("SELECT gold FROM global_inventory")).scalar_one()
-
-
+        result = connection.execute(sqlalchemy.text("SELECT num_green_potions, num_green_ml, gold FROM global_inventory")).first()
+        num_pots, num_ml, num_gold = result
     return {"number_of_potions": num_pots, "ml_in_barrels": num_ml, "gold": num_gold}
 
 # Gets called once a day
@@ -36,9 +33,8 @@ def get_capacity_plan():
     # EDIT SO THAT WE GET THE AMOUNT OF POTIONS/ML FROM RED AND BLUE AS WELL
 
     with db.engine.begin() as connection:
-        num_pots = connection.execute(sqlalchemy.text("SELECT num_green_potions FROM global_inventory")).scalar_one()
-        num_ml = connection.execute(sqlalchemy.text("SELECT num_green_ml FROM global_inventory")).scalar_one()
-
+        result = connection.execute(sqlalchemy.text("SELECT num_green_potions, num_green_ml FROM global_inventory")).first()
+        num_pots, num_ml = result
     return {
         "potion_capacity": 50 - num_pots,
         "ml_capacity": 10000 - num_ml
