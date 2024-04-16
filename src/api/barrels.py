@@ -65,19 +65,22 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     print(wholesale_catalog)
 
     # probably will need to edit barrel purchasing logic at some point
+    # implement capacity checking:
+    # and ml_limit - (barrel.ml_per_barrel * barrel.quantity) > 0
 
     with db.engine.begin() as connection:
         result = connection.execute(
             sqlalchemy.text(
-                "SELECT num_green_potions, num_red_potions, num_blue_potions, gold FROM global_inventory"
+                "SELECT num_green_potions, num_red_potions, num_blue_potions, num_green_ml, num_red_ml, num_blue_ml, gold FROM global_inventory"
             )
         ).first()
-        num_g, num_r, num_b, gold = result
+        num_g, num_r, num_b, g_ml, r_ml, b_ml, gold = result
+        ml_limit = 10000 - g_ml - r_ml - b_ml
         plan = []
 
         for barrel in wholesale_catalog:
             if barrel.sku == "SMALL_GREEN_BARREL":
-                if num_g < 10 and gold >= barrel.price * barrel.quantity:
+                if num_g < 10 and gold >= (barrel.price * barrel.quantity):
                     plan.append(
                         {
                             "sku": "SMALL_GREEN_BARREL",

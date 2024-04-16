@@ -79,9 +79,10 @@ def get_bottle_plan():
     g_ml //= 100
     r_ml //= 100
     b_ml //= 100
-    sum_p = num_bp + num_gp + num_rp
+    pot_limit = 50 - num_bp - num_gp - num_rp
 
     # dont bottle past 50 potions, maybe worry about that in the next version tho
+    # and pot_limit - g_ml > 0
 
     if g_ml > 0:
         plan.append(
