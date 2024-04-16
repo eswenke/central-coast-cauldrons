@@ -98,16 +98,13 @@ def post_visits(visit_id: int, customers: list[Customer]):
 def create_cart(new_cart: Customer):
     """ """
 
-    # ADD A NEW TABLE TO THE DB TO STORE:
-    # NEXT CART_ID (ask about how to generate, mayber an INSERT will do it for me)
-    # A BUNCH OF ITEMS (item_sku) (ASK PIERCE ABOUT THIS/HOW TO REPRESENT IN SUPABASE)
-    # QUANTITY (get from cart item)
-    #
+    with db.engine.begin() as connection:
+        connection.execute(sqlalchemy.text("INSERT INTO carts DEFAULT VALUES"))
+        id = connection.execute(
+            sqlalchemy.text("SELECT * FROM carts ORDER BY id DESC LIMIT 1")
+        ).first()[0]
 
-    # with db.engine.begin() as connection:
-    #     result = connection.execute(sqlalchemy.text("SELECT num_green_potions FROM global_inventory")).scalar_one()
-
-    return {"cart_id": 1}
+    return {"cart_id": id}
 
     # need two new tables, research how to do a foreign key reference.
     # cart id table, wil lhave a foreign key reference to the table with the potions
@@ -124,14 +121,36 @@ class CartItem(BaseModel):
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     """ """
 
-    # UPDATE THE CART ITEMS LIST TO ADD THIS ITEM AND ITS QUANTITY
-    # IF THEY GET THIS FAR, DO THEY HAVE TO CHECKOUT? CAN IT BE NEGATIVE QUANTITY?
-    # OR SHOULD I CHANGE THE QUANITY IN THE ACTUAL CHECKOUT
+    # update the cart if the item sku is a red potion, green potion, or blue potion
 
-    # with db.engine.begin() as connection:
-    #     connection.execute(
-    #         sqlalchemy.text()
-    #     )
+    with db.engine.begin() as connection:
+        if item_sku == "GREEN_POTION_0":
+            connection.execute(
+                sqlalchemy.text(
+                    "UPDATE carts SET num_green_potions = num_green_potions + "
+                    + str(cart_item.quantity)
+                    + " WHERE id = "
+                    + str(cart_id)
+                )
+            )
+        if item_sku == "RED_POTION_0":
+            connection.execute(
+                sqlalchemy.text(
+                    "UPDATE carts SET num_red_potions = num_red_potions + "
+                    + str(cart_item.quantity)
+                    + " WHERE id = "
+                    + str(cart_id)
+                )
+            )
+        if item_sku == "BLUE_POTION_0":
+            connection.execute(
+                sqlalchemy.text(
+                    "UPDATE carts SET num_blue_potions = num_blue_potions + "
+                    + str(cart_item.quantity)
+                    + " WHERE id = "
+                    + str(cart_id)
+                )
+            )
 
     return "OK"
 
@@ -144,11 +163,32 @@ class CartCheckout(BaseModel):
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
 
-    # EDIT MY GOLD
+    # go through the cart and gather values, update gold and potions inventory accordingly
 
     with db.engine.begin() as connection:
+        result = connection.execute(
+            sqlalchemy.text(
+                "SELECT green_potions, red_potions, blue_potions FROM carts WHERE id = "
+                + str(cart_id)
+            )
+        ).first()
+        g_p, r_p, b_p = result
+        g_gold = 25 * g_p
+        r_gold = 25 * r_p
+        b_gold = 25 * b_p
+        potion_sum = g_p + r_p + b_p
+        gold_sum = g_gold + r_gold + b_gold
         connection.execute(
-            sqlalchemy.text("UPDATE global_inventory SET gold = gold + 1, num_green_potions = num_green_potions - 1")
+            sqlalchemy.text(
+                "UPDATE global_inventory SET gold = gold + "
+                + str(gold_sum)
+                + ", num_green_potions = num_green_potions - "
+                + str(g_p)
+                + ", num_red_potions = num_red_potions - "
+                + str(r_p)
+                + ", num_blue_potions = num_blue_potions - "
+                + str(b_p)
+            )
         )
 
-    return {"total_potions_bought": 1, "total_gold_paid": 1}
+    return {"total_potions_bought": potion_sum, "total_gold_paid": gold_sum}
