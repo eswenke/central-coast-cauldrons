@@ -127,7 +127,7 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
         if item_sku == "GREEN_POTION_0":
             connection.execute(
                 sqlalchemy.text(
-                    "UPDATE carts SET num_green_potions = num_green_potions + "
+                    "UPDATE carts SET green_potions = green_potions + "
                     + str(cart_item.quantity)
                     + " WHERE id = "
                     + str(cart_id)
@@ -136,7 +136,7 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
         if item_sku == "RED_POTION_0":
             connection.execute(
                 sqlalchemy.text(
-                    "UPDATE carts SET num_red_potions = num_red_potions + "
+                    "UPDATE carts SET red_potions = red_potions + "
                     + str(cart_item.quantity)
                     + " WHERE id = "
                     + str(cart_id)
@@ -145,7 +145,7 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
         if item_sku == "BLUE_POTION_0":
             connection.execute(
                 sqlalchemy.text(
-                    "UPDATE carts SET num_blue_potions = num_blue_potions + "
+                    "UPDATE carts SET blue_potions = blue_potions + "
                     + str(cart_item.quantity)
                     + " WHERE id = "
                     + str(cart_id)
