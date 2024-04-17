@@ -99,10 +99,7 @@ def create_cart(new_cart: Customer):
     """ """
 
     with db.engine.begin() as connection:
-        connection.execute(sqlalchemy.text("INSERT INTO carts DEFAULT VALUES"))
-        id = connection.execute(
-            sqlalchemy.text("SELECT * FROM carts ORDER BY id DESC LIMIT 1")
-        ).first()[0]
+        id = connection.execute(sqlalchemy.text("INSERT INTO carts DEFAULT VALUES RETURNING id")).scalar_one()
 
     return {"cart_id": id}
 
