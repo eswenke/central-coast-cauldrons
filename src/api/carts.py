@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from src.api import auth
 from enum import Enum
 import sqlalchemy
+from sqlalchemy.exc import IntegrityError
 from src import database as db
 
 router = APIRouter(
@@ -117,6 +118,9 @@ class CartItem(BaseModel):
 @router.post("/{cart_id}/items/{item_sku}")
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     """ """
+
+    print(f"cart: {cart_id} item: {item_sku} quantity: {cart_item.quantity}")
+
 
     # update the cart if the item sku is a red potion, green potion, or blue potion
 

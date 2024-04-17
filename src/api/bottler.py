@@ -3,6 +3,7 @@ from enum import Enum
 from pydantic import BaseModel
 from src.api import auth
 import sqlalchemy
+from sqlalchemy.exc import IntegrityError
 from src import database as db
 
 router = APIRouter(
@@ -41,6 +42,11 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
     b_ml = b_p * 100
 
     with db.engine.begin() as connection:
+        try:
+            connection.execute(sqlalchemy.text("INSERT INTO processed (job_id, type) VALUE (:order_id, 'potions')"), [{"order_id": order_id}])
+        except IntegrityError as e:
+            return "OK"
+        
         connection.execute(
             sqlalchemy.text(
                 "UPDATE global_inventory SET num_green_ml = num_green_ml - "

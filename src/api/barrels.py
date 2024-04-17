@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from src.api import auth
 import sqlalchemy
+from sqlalchemy.exc import IntegrityError
 from src import database as db
 
 router = APIRouter(
@@ -31,17 +32,22 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
     b_ml = 0
     price = 0
     for barrel in barrels_delivered:
-        if barrel.sku == "SMALL_GREEN_BARREL":
+        if barrel.potion_type == [0, 1, 0, 0]:
             g_ml += barrel.ml_per_barrel * barrel.quantity
             price += barrel.price * barrel.quantity
-        if barrel.sku == "SMALL_RED_BARREL":
+        if barrel.potion_type == [1, 0, 0, 0]:
             r_ml += barrel.ml_per_barrel * barrel.quantity
             price += barrel.price * barrel.quantity
-        if barrel.sku == "SMALL_BLUE_BARREL":
+        if barrel.potion_type == [0, 0, 1, 0]:
             b_ml += barrel.ml_per_barrel * barrel.quantity
             price += barrel.price * barrel.quantity
 
     with db.engine.begin() as connection:
+        try:
+            connection.execute(sqlalchemy.text("INSERT INTO processed (job_id, type) VALUE (:order_id, 'barrels')"), [{"order_id": order_id}])
+        except IntegrityError as e:
+            return "OK"
+
         connection.execute(
             sqlalchemy.text(
                 "UPDATE global_inventory SET num_green_ml = num_green_ml + "
