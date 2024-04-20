@@ -86,31 +86,31 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
 
         for barrel in wholesale_catalog:
             if barrel.sku == "SMALL_GREEN_BARREL":
-                if num_g < 10 and gold >= (barrel.price * barrel.quantity):
+                if num_g < 10 and gold >= barrel.price: # * barrel.quantity)
                     plan.append(
                         {
                             "sku": "SMALL_GREEN_BARREL",
-                            "quantity": barrel.quantity,
+                            "quantity": 1,
                         }
                     )
-                    gold -= barrel.price * barrel.quantity
+                    gold -= barrel.price # * barrel.quantity
             if barrel.sku == "SMALL_RED_BARREL":
-                if num_r < 10 and gold >= barrel.price * barrel.quantity:
+                if num_r < 10 and gold >= barrel.price: # * barrel.quantity:
                     plan.append(
                         {
                             "sku": "SMALL_RED_BARREL",
-                            "quantity": barrel.quantity,
+                            "quantity": 1,
                         }
                     )
-                    gold -= barrel.price * barrel.quantity
+                    gold -= barrel.price# * barrel.quantity
             if barrel.sku == "SMALL_BLUE_BARREL":
-                if num_b < 10 and gold >= barrel.price * barrel.quantity:
+                if num_b < 10 and gold >= barrel.price: # * barrel.quantity:
                     plan.append(
                         {
                             "sku": "SMALL_BLUE_BARREL",
-                            "quantity": barrel.quantity,
+                            "quantity": 1,
                         }
                     )
-                    gold -= barrel.price * barrel.quantity
+                    gold -= barrel.price # * barrel.quantity
 
     return plan
