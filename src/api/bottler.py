@@ -93,7 +93,7 @@ def get_bottle_plan():
 
         result = connection.execute(
             sqlalchemy.text(
-                "SELECT inventory, type FROM potions WHERE sku IN ('BERRY_POTION', 'SWAMP_POTION', 'RAINBOW_POTION')"
+                "SELECT inventory, type FROM potions WHERE sku IN ('GREEN_POTION', 'RED_POTION', 'PEPPER_POTION', 'BERRY_POTION', 'SWAMP_POTION', 'BLUE_POTION')"
             )
         ).fetchall()
 
