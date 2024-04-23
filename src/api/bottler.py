@@ -29,7 +29,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
                 sqlalchemy.text(
                     "INSERT INTO processed (id, type) VALUES (:order_id, 'potions')"
                 ),
-                [{"order_id": order_id}]
+                [{"order_id": order_id}],
             )
         except IntegrityError as e:
             return "OK"
@@ -41,13 +41,13 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
             global_q += quantity
             potion_type = potion.potion_type
             for i in range(4):
-                mls[i] += potion_type[i]
+                mls[i] += potion_type[i] * potion.quantity
 
             connection.execute(
                 sqlalchemy.text(
                     "UPDATE potions SET inventory = inventory + :quantity WHERE type = :type"
                 ),
-                [{"quantity": quantity}, {"type": potion_type}]
+                [{"quantity": quantity, "type": potion_type}],
             )
 
         connection.execute(
@@ -61,12 +61,14 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
                 potions = potions + :global_q"""
             ),
             [
-                {"g_ml": mls[1]},
-                {"r_ml": mls[0]},
-                {"b_ml": mls[2]},
-                {"d_ml": mls[3]},
-                {"global_q": global_q},
-            ]
+                {
+                    "g_ml": mls[1],
+                    "r_ml": mls[0],
+                    "b_ml": mls[2],
+                    "d_ml": mls[3],
+                    "global_q": global_q,
+                },
+            ],
         )
 
     return "OK"
@@ -82,7 +84,7 @@ def get_bottle_plan():
     with db.engine.begin() as connection:
         result = connection.execute(
             sqlalchemy.text(
-                "SELECT green_ml, red_ml, blue_ml, dark_ml, potions, potions_capacity FROM global_inventory"
+                "SELECT green_ml, red_ml, blue_ml, dark_ml, potions, potion_capacity FROM global_inventory"
             )
         ).first()
         green_ml, red_ml, blue_ml, dark_ml, potions, potions_capacity = result
@@ -91,19 +93,21 @@ def get_bottle_plan():
 
         result = connection.execute(
             sqlalchemy.text(
-                "SELECT inventory, potion_type FROM potions WHERE sku IN ('BERRY_POTION', 'SWAMP_POTION', 'RAINBOW_POTION', 'GREEN_POTION', 'RED_POTION', 'BLUE_POTION')"
+                "SELECT inventory, type FROM potions WHERE sku IN ('BERRY_POTION', 'SWAMP_POTION', 'RAINBOW_POTION')"
             )
         ).fetchall()
 
+        threshold = 3
+
         for row in result:
-            if row.inventory > 8:
+            if row.inventory > threshold:
                 continue
             else:
-                max = max_quantity(mls, row.potion_type)
+                max = max_quantity(mls, row.type)
                 if max == 0:
                     continue
 
-                quantity = 8 - row.inventory
+                quantity = threshold - row.inventory
                 final_quantity = quantity if max >= quantity else max
                 cap_quantity = (
                     final_quantity
@@ -111,6 +115,7 @@ def get_bottle_plan():
                     else (potions_capacity - potions)
                 )
                 potions += cap_quantity
+                mls = sub_ml(mls, row.type, max)
 
                 plan.append({"potion_type": row.type, "quantity": cap_quantity})
 
@@ -124,7 +129,16 @@ def max_quantity(arr1, arr2):
             result.append(x // y)
         else:
             result.append(float("inf"))
+
+    print(result)
     return min(result)
+
+
+def sub_ml(arr1, arr2, max):
+    result = []
+    for x, y in zip(arr1, arr2):
+        result.append(x - (max * y))
+    return result
 
 
 if __name__ == "__main__":

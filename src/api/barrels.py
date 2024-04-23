@@ -27,9 +27,6 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
     """ """
     print(f"barrels delievered: {barrels_delivered} order_id: {order_id}")
 
-    # update ml and gold in global inventory
-    # get rid of string concatentation, use bindings
-
     g_ml = 0
     r_ml = 0
     b_ml = 0
@@ -52,7 +49,7 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
                 sqlalchemy.text(
                     "INSERT INTO processed (id, type) VALUES (:order_id, 'barrels')"
                 ),
-                [{"order_id": order_id}]
+                [{"order_id": order_id}],
             )
         except IntegrityError as e:
             return "OK"
@@ -67,13 +64,7 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
                 dark_ml = dark_ml + :d_ml,
                 gold = gold - :price"""
             ),
-            [
-                {"g_ml": g_ml},
-                {"r_ml": r_ml},
-                {"b_ml": b_ml},
-                {"d_ml": d_ml},
-                {"price": price},
-            ]
+            [{"g_ml": g_ml, "r_ml": r_ml, "b_ml": b_ml, "d_ml": d_ml, "price": price}],
         )
 
     return "OK"
@@ -111,7 +102,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                     plan,
                     potion_type,
                     gold // 4 if gold > 400 else gold,
-                    ml_limit
+                    ml_limit,
                 )
                 if barrel_purchase is not None:
                     price = next(
@@ -131,7 +122,9 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     return plan
 
 
-def create_wpp(wholesale_catalog: list[Barrel], plan: list[Barrel], potion_type, gold, ml_limit):
+def create_wpp(
+    wholesale_catalog: list[Barrel], plan: list[Barrel], potion_type, gold, ml_limit
+):
     """ """
 
     for barrel in wholesale_catalog:
@@ -143,14 +136,16 @@ def create_wpp(wholesale_catalog: list[Barrel], plan: list[Barrel], potion_type,
             and (barrel not in plan)
         ):
             q_max = ml_limit // barrel.ml_per_barrel
-            q_buyable = gold // (barrel.price * barrel.quantity)
+            q_buyable = gold // barrel.price
+            q_final = q_buyable if q_max >= q_buyable else q_max
+            q_final = q_final if q_final <= barrel.quantity else barrel.quantity
 
             if q_max < 0:
                 return None
             else:
                 return {
                     "sku": barrel.sku,
-                    "quantity": q_buyable if q_max >= q_buyable else q_max,
+                    "quantity": q_final,
                 }
-        else:
-            return None
+
+    return None

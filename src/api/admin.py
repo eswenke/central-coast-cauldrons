@@ -10,6 +10,7 @@ router = APIRouter(
     dependencies=[Depends(auth.get_api_key)],
 )
 
+
 @router.post("/reset")
 def reset():
     """
@@ -20,18 +21,9 @@ def reset():
     with db.engine.begin() as connection:
         connection.execute(
             sqlalchemy.text(
-                "UPDATE global_inventory SET num_green_ml = 0, num_red_ml = 0, num_blue_ml = 0, num_green_potions = 0, num_red_potions = 0, num_blue_potions = 0, gold = 100"
+                "UPDATE global_inventory SET green_ml = 0, red_ml = 0, blue_ml = 0, dark_ml = 0, potions = 0, gold = 100"
             )
         )
-        connection.execute(
-            sqlalchemy.text(
-                "TRUNCATE carts"
-            )
-        )
-        connection.execute(
-            sqlalchemy.text(
-                "TRUNCATE cart_items"
-            )
-        )
+        connection.execute(sqlalchemy.text("TRUNCATE carts CASCADE"))
 
     return "OK"

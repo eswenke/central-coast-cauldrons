@@ -101,7 +101,10 @@ def create_cart(new_cart: Customer):
 
     with db.engine.begin() as connection:
         id = connection.execute(
-            sqlalchemy.text("INSERT INTO carts DEFAULT VALUES RETURNING id")
+            sqlalchemy.text(
+                "INSERT INTO carts (customer) VALUES (:customer) RETURNING id"
+            ),
+            [{"customer": new_cart.customer_name}],
         ).scalar_one()
 
     return {"cart_id": id}
@@ -124,7 +127,7 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
                 INSERT INTO cart_items (cart, potion, quantity)
                 VALUES (:cart, :potion, :quantity)"""
             ),
-            [{"cart": cart_id}, {"potion": item_sku}, {"quantity": cart_item.quantity}],
+            [{"cart": cart_id, "potion": item_sku, "quantity": cart_item.quantity}],
         )
 
     return "OK"
@@ -163,6 +166,13 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             ),
             [{"cart_id": cart_id}],
         ).first()
-        sum_potions, sum_gold = result
+        sum_gold, sum_potions = result
+
+        connection.execute(
+            sqlalchemy.text(
+                "UPDATE global_inventory SET potions = potions - :sum_potions, gold = gold + :sum_gold"
+            ),
+            [{"sum_potions": sum_potions, "sum_gold": sum_gold}],
+        ),
 
     return {"total_potions_bought": sum_potions, "total_gold_paid": sum_gold}
