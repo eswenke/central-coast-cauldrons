@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from src.api import auth
 import math
 import sqlalchemy
+from sqlalchemy.exc import IntegrityError
 from src import database as db
 
 router = APIRouter(
@@ -39,13 +40,31 @@ def get_capacity_plan():
     with db.engine.begin() as connection:
         result = connection.execute(
             sqlalchemy.text(
-                "SELECT green_ml, red_ml, blue_ml, dark_ml, potions, potion_capacity, ml_capacity FROM global_inventory"
+                "SELECT green_ml, red_ml, blue_ml, dark_ml, potions, potion_capacity, ml_capacity, gold FROM global_inventory"
             )
         ).first()
-        green_ml, red_ml, blue_ml, dark_ml, potions, potion_capacity, ml_capacity = result
+        (
+            green_ml,
+            red_ml,
+            blue_ml,
+            dark_ml,
+            potions,
+            potion_capacity,
+            ml_capacity,
+            gold,
+        ) = result
         ml = green_ml + red_ml + blue_ml + dark_ml
+        pot_cap = 0
+        ml_cap = 0
 
-    return {"potion_capacity": potion_capacity - potions, "ml_capacity": ml_capacity - ml}
+        if gold >= 3000:
+            pot_cap = 1 if potion_capacity - potions < 15 else 0
+            ml_cap = 1 if ml_capacity - ml < 2500 else 0
+
+    return {
+        "potion_capacity": pot_cap,
+        "ml_capacity": ml_cap,
+    }
 
 
 class CapacityPurchase(BaseModel):
@@ -61,9 +80,35 @@ def deliver_capacity_plan(capacity_purchase: CapacityPurchase, order_id: int):
     capacity unit costs 1000 gold.
     """
 
-    # DONT NEED TO EDIT THIS YET
-
     print(f"capacity purchase: {capacity_purchase} order_id: {order_id}")
 
+    with db.engine.begin() as connection:
+        try:
+            connection.execute(
+                sqlalchemy.text(
+                    "INSERT INTO processed (id, type) VALUES (:order_id, 'capacity')"
+                ),
+                [{"order_id": order_id}],
+            )
+        except IntegrityError as e:
+            return "OK"
 
-    return "OK"
+        connection.execute(
+            sqlalchemy.text(
+                """UPDATE global_inventory SET 
+                potion_capacity = potion_capacity + (:pot_cap * 50), 
+                ml_capacity = ml_capacity + (:ml_cap * 10000),
+                gold = gold - (1000 * (:pot_cap + :ml_cap))"""
+            ),
+            [
+                {
+                    "pot_cap": capacity_purchase.potion_capacity,
+                    "ml_cap": capacity_purchase.ml_capacity,
+                }
+            ],
+        )
+
+    return {
+        "potion_capacity": capacity_purchase.potion_capacity,
+        "ml_capacity": capacity_purchase.ml_capacity,
+    }
