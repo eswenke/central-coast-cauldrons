@@ -100,7 +100,7 @@ def get_bottle_plan():
         threshold = 8
 
         for row in result:
-            print(row.inventory)
+            # print(row.inventory)
             if row.inventory >= threshold:
                 continue
             else:
@@ -131,7 +131,7 @@ def max_quantity(arr1, arr2):
         else:
             result.append(float("inf"))
 
-    print(result)
+    # print(result)
     return min(result)
 
 
