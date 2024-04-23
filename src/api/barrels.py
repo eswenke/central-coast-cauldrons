@@ -129,7 +129,7 @@ def create_wpp(
 
     for barrel in wholesale_catalog:
         if (
-            (gold > barrel.price)
+            (gold >= barrel.price)
             and (potion_type == barrel.potion_type)
             and ("MINI" not in barrel.sku)
             and ("LARGE" not in barrel.sku)
@@ -139,6 +139,10 @@ def create_wpp(
             q_buyable = gold // barrel.price
             q_final = q_buyable if q_max >= q_buyable else q_max
             q_final = q_final if q_final <= barrel.quantity else barrel.quantity
+
+            print("q_max: " + str(q_max))
+            print("q_buy: " + str(q_buyable))
+            print("q_final: " + str(q_final))
 
             if q_max < 0:
                 return None
