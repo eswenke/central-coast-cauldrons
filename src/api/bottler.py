@@ -97,7 +97,7 @@ def get_bottle_plan():
             )
         ).fetchall()
 
-        threshold = 5
+        threshold = 8
 
         for row in result:
             print(row.inventory)
