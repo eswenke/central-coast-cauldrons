@@ -140,9 +140,9 @@ def create_wpp(
             q_final = q_buyable if q_max >= q_buyable else q_max
             q_final = q_final if q_final <= barrel.quantity else barrel.quantity
 
-            print("q_max: " + str(q_max))
-            print("q_buy: " + str(q_buyable))
-            print("q_final: " + str(q_final))
+            # print("q_max: " + str(q_max))
+            # print("q_buy: " + str(q_buyable))
+            # print("q_final: " + str(q_final))
 
             if q_max < 0:
                 return None
