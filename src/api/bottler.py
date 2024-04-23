@@ -97,10 +97,11 @@ def get_bottle_plan():
             )
         ).fetchall()
 
-        threshold = 3
+        threshold = 5
 
         for row in result:
-            if row.inventory > threshold:
+            print(row.inventory)
+            if row.inventory >= threshold:
                 continue
             else:
                 max = max_quantity(mls, row.type)
