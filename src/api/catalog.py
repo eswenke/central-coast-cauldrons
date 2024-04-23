@@ -11,48 +11,16 @@ def get_catalog():
     Each unique item combination must have only a single price.
     """
 
-    ## SELL ONE FOR RIGHT NOW
-    ## AFTER WE CAN SELL ONE, CHANGE AND MAKE SURE WE CAN SELL MANY
-
     plan = []
 
     with db.engine.begin() as connection:
         result = connection.execute(
             sqlalchemy.text(
-                "SELECT num_green_potions, num_red_potions, num_blue_potions FROM global_inventory"
+                "SELECT * FROM potions WHERE sku IN ('GREEN_POTION', 'RED_POTION', 'BLUE_POTION', 'BERRY_POTION', 'SWAMP_POTION', 'RAINBOW_POTION') AND inventory > 0"
             )
-        ).first()
-        num_g, num_r, num_b = result
+        ).fetchall()
 
-        if num_g > 0:
-            plan.append(
-                {
-                    "sku": "GREEN_POTION_0",
-                    "name": "green potion",
-                    "quantity": num_g,
-                    "price": 25,
-                    "potion_type": [0, 100, 0, 0],
-                }
-            )
-        if num_r > 0:
-            plan.append(
-                {
-                    "sku": "RED_POTION_0",
-                    "name": "red potion",
-                    "quantity": num_r,
-                    "price": 25,
-                    "potion_type": [100, 0, 0, 0],
-                }
-            )
-        if num_b > 0:
-            plan.append(
-                {
-                    "sku": "BLUE_POTION_0",
-                    "name": "blue potion",
-                    "quantity": num_b,
-                    "price": 25,
-                    "potion_type": [0, 0, 100, 0],
-                }
-            )
+        for row in result:
+            plan.append({"sku": row.sku, "quantity": row.inventory, "price": row.price, "potion_type": row.type})
 
     return plan

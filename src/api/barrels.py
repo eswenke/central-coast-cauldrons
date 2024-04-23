@@ -27,38 +27,53 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
     """ """
     print(f"barrels delievered: {barrels_delivered} order_id: {order_id}")
 
+    # update ml and gold in global inventory
+    # get rid of string concatentation, use bindings
+
     g_ml = 0
     r_ml = 0
     b_ml = 0
+    d_ml = 0
     price = 0
     for barrel in barrels_delivered:
+        price += barrel.price * barrel.quantity
         if barrel.potion_type == [0, 1, 0, 0]:
             g_ml += barrel.ml_per_barrel * barrel.quantity
-            price += barrel.price * barrel.quantity
         if barrel.potion_type == [1, 0, 0, 0]:
             r_ml += barrel.ml_per_barrel * barrel.quantity
-            price += barrel.price * barrel.quantity
         if barrel.potion_type == [0, 0, 1, 0]:
             b_ml += barrel.ml_per_barrel * barrel.quantity
-            price += barrel.price * barrel.quantity
+        if barrel.potion_type == [0, 0, 0, 1]:
+            d_ml += barrel.ml_per_barrel * barrel.quantity
 
     with db.engine.begin() as connection:
         try:
-            connection.execute(sqlalchemy.text("INSERT INTO processed (id, type) VALUES (:order_id, 'barrels')"), [{"order_id": order_id}])
+            connection.execute(
+                sqlalchemy.text(
+                    "INSERT INTO processed (id, type) VALUES (:order_id, 'barrels')"
+                ),
+                [{"order_id": order_id}]
+            )
         except IntegrityError as e:
             return "OK"
 
         connection.execute(
             sqlalchemy.text(
-                "UPDATE global_inventory SET num_green_ml = num_green_ml + "
-                + str(g_ml)
-                + ", num_red_ml = num_red_ml + "
-                + str(r_ml)
-                + ", num_blue_ml = num_blue_ml + "
-                + str(b_ml)
-                + ", gold = gold - "
-                + str(price)
-            )
+                """
+                UPDATE global_inventory 
+                SET green_ml = green_ml + :g_ml,
+                red_ml = red_ml + :r_ml,
+                blue_ml = blue_ml + :b_ml,
+                dark_ml = dark_ml + :d_ml,
+                gold = gold - :price"""
+            ),
+            [
+                {"g_ml": g_ml},
+                {"r_ml": r_ml},
+                {"b_ml": b_ml},
+                {"d_ml": d_ml},
+                {"price": price},
+            ]
         )
 
     return "OK"
@@ -70,47 +85,72 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     """ """
     print(wholesale_catalog)
 
-    # probably will need to edit barrel purchasing logic at some point
-    # implement capacity checking:
-    # and ml_limit - (barrel.ml_per_barrel * barrel.quantity) > 0
-
     with db.engine.begin() as connection:
         result = connection.execute(
             sqlalchemy.text(
-                "SELECT num_green_potions, num_red_potions, num_blue_potions, num_green_ml, num_red_ml, num_blue_ml, gold FROM global_inventory"
+                "SELECT green_ml, red_ml, blue_ml, dark_ml, gold, ml_capacity FROM global_inventory"
             )
         ).first()
-        num_g, num_r, num_b, g_ml, r_ml, b_ml, gold = result
-        ml_limit = 10000 - g_ml - r_ml - b_ml
+        g_ml, r_ml, b_ml, d_ml, gold, ml_capacity = result
+        ml_arr = [r_ml, g_ml, b_ml, d_ml]
+        current_ml = sum(ml_arr)
+
+        selling_large = any(item.sku.startswith("LARGE") for item in wholesale_catalog)
+        normal_threshold = 3000
+        large_threshold = 1000
+        threshold = large_threshold if selling_large else normal_threshold
+
         plan = []
 
-        for barrel in wholesale_catalog:
-            if barrel.sku == "SMALL_GREEN_BARREL":
-                if num_g < 10 and gold >= barrel.price: # * barrel.quantity)
-                    plan.append(
-                        {
-                            "sku": "SMALL_GREEN_BARREL",
-                            "quantity": 1,
-                        }
+        for i, ml in enumerate(ml_arr):
+            ml_limit = ml_capacity - current_ml
+            if ml < threshold:
+                potion_type = [int(j == i) for j in range(4)]
+                barrel_purchase = create_wpp(
+                    wholesale_catalog,
+                    plan,
+                    potion_type,
+                    gold // 4 if gold > 400 else gold,
+                    ml_limit
+                )
+                if barrel_purchase is not None:
+                    price = next(
+                        item.price
+                        for item in wholesale_catalog
+                        if item.sku == barrel_purchase["sku"]
                     )
-                    gold -= barrel.price # * barrel.quantity
-            if barrel.sku == "SMALL_RED_BARREL":
-                if num_r < 10 and gold >= barrel.price: # * barrel.quantity:
-                    plan.append(
-                        {
-                            "sku": "SMALL_RED_BARREL",
-                            "quantity": 1,
-                        }
+                    ml_per_barrel = next(
+                        item.ml_per_barrel
+                        for item in wholesale_catalog
+                        if item.sku == barrel_purchase["sku"]
                     )
-                    gold -= barrel.price# * barrel.quantity
-            if barrel.sku == "SMALL_BLUE_BARREL":
-                if num_b < 10 and gold >= barrel.price: # * barrel.quantity:
-                    plan.append(
-                        {
-                            "sku": "SMALL_BLUE_BARREL",
-                            "quantity": 1,
-                        }
-                    )
-                    gold -= barrel.price # * barrel.quantity
+                    plan.append(barrel_purchase)
+                    gold -= price * barrel_purchase["quantity"]
+                    current_ml += ml_per_barrel * barrel_purchase["quantity"]
 
     return plan
+
+
+def create_wpp(wholesale_catalog: list[Barrel], plan: list[Barrel], potion_type, gold, ml_limit):
+    """ """
+
+    for barrel in wholesale_catalog:
+        if (
+            (gold > barrel.price)
+            and (potion_type == barrel.potion_type)
+            and ("MINI" not in barrel.sku)
+            and ("LARGE" not in barrel.sku)
+            and (barrel not in plan)
+        ):
+            q_max = ml_limit // barrel.ml_per_barrel
+            q_buyable = gold // (barrel.price * barrel.quantity)
+
+            if q_max < 0:
+                return None
+            else:
+                return {
+                    "sku": barrel.sku,
+                    "quantity": q_buyable if q_max >= q_buyable else q_max,
+                }
+        else:
+            return None

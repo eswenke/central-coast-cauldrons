@@ -19,13 +19,13 @@ def get_inventory():
     with db.engine.begin() as connection:
         result = connection.execute(
             sqlalchemy.text(
-                "SELECT num_green_potions, num_red_potions, num_blue_potions, num_green_ml, num_red_ml, num_blue_ml, gold FROM global_inventory"
+                "SELECT green_ml, red_ml, blue_ml, dark_ml, gold, potions FROM global_inventory"
             )
         ).first()
-        num_gpots, num_rpots, num_bpots, num_gml, num_rml, num_bml, num_gold = result
-        ml = num_gml + num_rml + num_bml
-        pots = num_gpots + num_rpots + num_bpots
-    return {"number_of_potions": pots, "ml_in_barrels": ml, "gold": num_gold}
+        green_ml, red_ml, blue_ml, dark_ml, gold, potions = result
+        ml = green_ml + red_ml + blue_ml + dark_ml
+        
+    return {"number_of_potions": potions, "ml_in_barrels": ml, "gold": gold}
 
 
 # Gets called once a day
@@ -39,14 +39,13 @@ def get_capacity_plan():
     with db.engine.begin() as connection:
         result = connection.execute(
             sqlalchemy.text(
-                "SELECT num_green_potions, num_red_potions, num_blue_potions, num_green_ml, num_red_ml, num_blue_ml FROM global_inventory"
+                "SELECT green_ml, red_ml, blue_ml, dark_ml, potions FROM global_inventory"
             )
         ).first()
-        num_gpots, num_rpots, num_bpots, num_gml, num_rml, num_bml = result
-        ml = num_gml + num_rml + num_bml
-        pots = num_gpots + num_rpots + num_bpots
+        green_ml, red_ml, blue_ml, dark_ml, potions = result
+        ml = green_ml + red_ml + blue_ml + dark_ml
 
-    return {"potion_capacity": 50 - pots, "ml_capacity": 10000 - ml}
+    return {"potion_capacity": 50 - potions, "ml_capacity": 10000 - ml}
 
 
 class CapacityPurchase(BaseModel):
