@@ -101,7 +101,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                     wholesale_catalog,
                     plan,
                     potion_type,
-                    gold // 4 if gold > 400 else gold,
+                    gold // 4 if gold >= 400 else gold,
                     ml_limit,
                 )
                 if barrel_purchase is not None:
