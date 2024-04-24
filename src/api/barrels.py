@@ -97,12 +97,14 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             ml_limit = ml_capacity - current_ml
             if ml < threshold:
                 potion_type = [int(j == i) for j in range(4)]
+                print(gold)
                 barrel_purchase = create_wpp(
                     wholesale_catalog,
                     plan,
                     potion_type,
-                    gold // 4 if gold >= 400 else gold,
+                    gold / 4 if gold >= 300 else gold,
                     ml_limit,
+                    ml_arr
                 )
                 if barrel_purchase is not None:
                     price = next(
@@ -123,33 +125,40 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
 
 
 def create_wpp(
-    wholesale_catalog: list[Barrel], plan: list[Barrel], potion_type, gold, ml_limit
+    wholesale_catalog: list[Barrel], plan: list[Barrel], potion_type, gold, ml_limit, mls
 ):
     """ """
+    mini = False
+    i = 0
+    for ml in mls:
+        if ml < 250:
+            i += 1
+    if i >= 3 and gold < 100:
+        mini = True
+
+    # add similar logic for "LARGE" later on
 
     for barrel in wholesale_catalog:
         if (
             (gold >= barrel.price)
             and (potion_type == barrel.potion_type)
-            and ("MINI" not in barrel.sku)
             and ("LARGE" not in barrel.sku)
             and (barrel not in plan)
         ):
-            q_max = ml_limit // barrel.ml_per_barrel
-            q_buyable = gold // barrel.price
-            q_final = q_buyable if q_max >= q_buyable else q_max
-            q_final = q_final if q_final <= barrel.quantity else barrel.quantity
-
-            # print("q_max: " + str(q_max))
-            # print("q_buy: " + str(q_buyable))
-            # print("q_final: " + str(q_final))
-
-            if q_max < 0:
-                return None
+            if not mini and ("MINI" in barrel.sku):
+                continue
             else:
-                return {
-                    "sku": barrel.sku,
-                    "quantity": q_final,
-                }
+                q_max = ml_limit // barrel.ml_per_barrel
+                q_buyable = gold // barrel.price
+                q_final = q_buyable if q_max >= q_buyable else q_max
+                q_final = q_final if q_final <= barrel.quantity else barrel.quantity
+
+                if q_max < 0:
+                    return None
+                else:
+                    return {
+                        "sku": barrel.sku,
+                        "quantity": q_final,
+                    }
 
     return None
