@@ -97,7 +97,6 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             ml_limit = ml_capacity - current_ml
             if ml < threshold:
                 potion_type = [int(j == i) for j in range(4)]
-                print(gold)
                 barrel_purchase = create_wpp(
                     wholesale_catalog,
                     plan,
