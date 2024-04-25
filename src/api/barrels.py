@@ -86,7 +86,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         ml_arr = [r_ml, g_ml, b_ml, d_ml]
         current_ml = sum(ml_arr)
 
-        if potions >= 5 and gold <= 200:
+        if potions >= 5 and gold <= 250:
             return []
 
         selling_large = any(item.sku.startswith("LARGE") for item in wholesale_catalog)
