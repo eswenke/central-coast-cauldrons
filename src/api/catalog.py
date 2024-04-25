@@ -16,7 +16,7 @@ def get_catalog():
     with db.engine.begin() as connection:
         result = connection.execute(
             sqlalchemy.text(
-                "SELECT * FROM potions WHERE sku IN ('GREEN_POTION', 'RED_POTION', 'BLUE_POTION', 'BERRY_POTION', 'SWAMP_POTION', 'RAINBOW_POTION') AND inventory > 0"
+                "SELECT * FROM potions WHERE sku IN ('BERRY_POTION', 'SWAMP_POTION', 'PEPPER_POTION', 'RGB_POTION') AND inventory > 0"
             )
         ).fetchall()
 
