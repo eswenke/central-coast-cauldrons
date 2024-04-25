@@ -4,6 +4,7 @@ from src.api import auth
 import sqlalchemy
 from sqlalchemy.exc import IntegrityError
 from src import database as db
+import random
 
 router = APIRouter(
     prefix="/barrels",
@@ -88,6 +89,8 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
 
         if gold < 240 and potions >= 5: # if low gold and still have potions, wait for potions to sell before barreling
             return []
+        elif gold < 240 and potions < 5:
+            type_selected = random.randint(0, 3)
 
         # future threshold logic:
         # change thresholds based on ml_capacity

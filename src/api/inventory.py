@@ -25,6 +25,8 @@ def get_inventory():
         ).first()
         green_ml, red_ml, blue_ml, dark_ml, gold, potions = result
         ml = green_ml + red_ml + blue_ml + dark_ml
+        print(ml)
+        print(gold)
 
     return {"number_of_potions": potions, "ml_in_barrels": ml, "gold": gold}
 
