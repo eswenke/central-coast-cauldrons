@@ -97,7 +97,16 @@ def get_bottle_plan():
             )
         ).fetchall()
 
+        # write future threshold logic to increase based on potion capacity from global inventory
         threshold = 8
+
+        # current logic: 
+        # bottle each type the max it can up to its potion capacity 
+
+        # future logic:
+        # instead of going all in on one, i want to loop through every potion and increase its quantity by 1 until:
+            # no more potions can be bottled or
+            # capacity is reached for that individual potion or potions inventory
 
         for row in result:
             # print(row.inventory)

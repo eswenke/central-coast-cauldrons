@@ -89,6 +89,11 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         if gold < 240 and potions >= 5: # if low gold and still have potions, wait for potions to sell before barreling
             return []
 
+        # future threshold logic:
+        # change thresholds based on ml_capacity
+        # change barreling function based on if we are not poor
+        # change barreling function based on if LARGE threshold is active
+
         selling_large = any(item.sku.startswith("LARGE") for item in wholesale_catalog)
         normal_threshold = 3000
         large_threshold = 1000
