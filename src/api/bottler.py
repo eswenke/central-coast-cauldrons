@@ -119,14 +119,16 @@ def get_bottle_plan():
                 # keep track of that potions capacity in relation to the threshold
                 # keep track of the global inventory's potion capacity
 
-        print(result)
 
         for row in result:
             # print(row.inventory)
+            # print(mls)
+            # print(row)
             if row.inventory >= threshold:
                 continue
             else:
                 max = max_quantity(mls, row.type)
+                print("max: " + str(max))
                 if max == 0:
                     continue
 
@@ -138,10 +140,11 @@ def get_bottle_plan():
                     else (potions_capacity - potions)
                 )
                 potions += cap_quantity
-                mls = sub_ml(mls, row.type, max)
+                mls = sub_ml(mls, row.type, cap_quantity)
 
                 plan.append({"potion_type": row.type, "quantity": cap_quantity})
 
+    print(plan)
     return plan
 
 
