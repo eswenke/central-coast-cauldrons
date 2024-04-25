@@ -86,13 +86,14 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         ml_arr = [r_ml, g_ml, b_ml, d_ml]
         current_ml = sum(ml_arr)
 
-        if potions >= 5 and gold <= 250:
+        if gold < 240 and potions >= 5: # if low gold and still have potions, wait for potions to sell before barreling
             return []
 
         selling_large = any(item.sku.startswith("LARGE") for item in wholesale_catalog)
         normal_threshold = 3000
         large_threshold = 1000
         threshold = large_threshold if selling_large else normal_threshold
+        gold_dec = False
 
         plan = []
 
@@ -100,11 +101,14 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             ml_limit = ml_capacity - current_ml
             if ml < threshold:
                 potion_type = [int(j == i) for j in range(4)]
+                if gold < 240: # if gold less than 240, decrement gold each iteration. if not, do not.
+                    gold_dec = True
+
                 barrel_purchase = create_wpp(
                     wholesale_catalog,
                     plan,
                     potion_type,
-                    gold / 4 if gold >= 300 else gold,
+                    gold / 4 if (not gold_dec) else gold,
                     ml_limit,
                     ml_arr
                 )
@@ -120,7 +124,8 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                         if item.sku == barrel_purchase["sku"]
                     )
                     plan.append(barrel_purchase)
-                    gold -= price * barrel_purchase["quantity"]
+                    if (gold_dec): # not decremented when gold can be divisible by 4 for more variety
+                        gold -= price * barrel_purchase["quantity"]
                     current_ml += ml_per_barrel * barrel_purchase["quantity"]
 
     return plan
@@ -139,6 +144,7 @@ def create_wpp(
         mini = True
 
     # add similar logic for "LARGE" later on
+    # print("mini: " + str(mini))
 
     for barrel in wholesale_catalog:
         if (
@@ -154,6 +160,10 @@ def create_wpp(
                 q_buyable = gold // barrel.price
                 q_final = q_buyable if q_max >= q_buyable else q_max
                 q_final = q_final if q_final <= barrel.quantity else barrel.quantity
+
+                # print("q_max: " + str(q_max))
+                # print("q_buy: " + str(q_buyable))
+                # print("q_final: " + str(q_final))
 
                 if q_max < 0:
                     return None
