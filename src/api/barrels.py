@@ -79,12 +79,15 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     with db.engine.begin() as connection:
         result = connection.execute(
             sqlalchemy.text(
-                "SELECT green_ml, red_ml, blue_ml, dark_ml, gold, ml_capacity FROM global_inventory"
+                "SELECT green_ml, red_ml, blue_ml, dark_ml, gold, ml_capacity, potions FROM global_inventory"
             )
         ).first()
-        g_ml, r_ml, b_ml, d_ml, gold, ml_capacity = result
+        g_ml, r_ml, b_ml, d_ml, gold, ml_capacity, potions = result
         ml_arr = [r_ml, g_ml, b_ml, d_ml]
         current_ml = sum(ml_arr)
+
+        if potions >= 5 and gold <= 200:
+            return []
 
         selling_large = any(item.sku.startswith("LARGE") for item in wholesale_catalog)
         normal_threshold = 3000
