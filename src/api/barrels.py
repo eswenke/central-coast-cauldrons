@@ -143,6 +143,8 @@ def create_wpp(
     wholesale_catalog: list[Barrel], plan: list[Barrel], potion_type, gold, ml_limit, mls
 ):
     """ """
+    gold = int(gold)
+
     mini = False
     i = 0
     for ml in mls:
