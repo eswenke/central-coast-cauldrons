@@ -90,7 +90,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         # if low gold and still have potions, wait for potions to sell before barreling
         # if high ml, stop buying barrels to save some gold.
         if (gold < 240 and potions >= 5) or (
-            ml_arr[1] > 1000 and ml_arr[2] > 1000 and ml_arr[3] > 1000
+            ml_arr[0] > 1000 and ml_arr[1] > 1000 and ml_arr[2] > 1000
         ):
             return []
 
