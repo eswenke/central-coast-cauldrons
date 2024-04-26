@@ -93,32 +93,31 @@ def get_bottle_plan():
 
         result = connection.execute(
             sqlalchemy.text(
-                "SELECT inventory, type FROM potions WHERE sku IN ('PEPPER_POTION', 'BERRY_POTION', 'SWAMP_POTION', 'RGB_POTION')"
+                "SELECT inventory, type FROM potions WHERE sku IN ('PEPPER_POTION', 'BERRY_POTION', 'SWAMP_POTION', 'RGB_POTION', 'RED_POTION', 'BLUE_POTION')"
             )
         ).fetchall()
 
         # write future threshold logic to increase based on potion capacity from global inventory
         threshold = 8
 
-        # current logic: 
-        # bottle each type the max it can up to its potion capacity 
+        # current logic:
+        # bottle each type the max it can up to its potion capacity
 
         # future logic:
         # instead of going all in on one, i want to loop through every potion and increase its quantity by 1 until:
-            # no more potions can be bottled or
-            # capacity is reached for that individual potion or potions inventory
+        # no more potions can be bottled or
+        # capacity is reached for that individual potion or potions inventory
 
         # collect current mls, potions, and potion capacity from global inventory
         # while potions < potions_capacity and there is still ml available to bottle at least one of the potions in catalog
-            # for loop like the one i currently have
-                # every iteration adds 1 to that potion if it is possible to be bottled
-                # if that potion type is already in the potions list, just increment the quantity by one if possible
-                # if that potion type is not already in the list and can be bottled, add to the list with 1 quantity
-                # if not possible, continue to next in the for loop
-                # subtract any ml bottled from the current amounts of ml
-                # keep track of that potions capacity in relation to the threshold
-                # keep track of the global inventory's potion capacity
-
+        # for loop like the one i currently have
+        # every iteration adds 1 to that potion if it is possible to be bottled
+        # if that potion type is already in the potions list, just increment the quantity by one if possible
+        # if that potion type is not already in the list and can be bottled, add to the list with 1 quantity
+        # if not possible, continue to next in the for loop
+        # subtract any ml bottled from the current amounts of ml
+        # keep track of that potions capacity in relation to the threshold
+        # keep track of the global inventory's potion capacity
 
         for row in result:
             # print(row.inventory)
