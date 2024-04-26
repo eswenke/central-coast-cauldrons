@@ -93,6 +93,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             type_selected = random.randint(0, 3)
 
         # future threshold logic:
+        # write a limit on buying based on how much ml we have / potions we have in relation to ml_capacity
         # change thresholds based on ml_capacity
         # change barreling function based on if we are not poor
         # change barreling function based on if LARGE threshold is active

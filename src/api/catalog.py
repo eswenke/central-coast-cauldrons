@@ -11,6 +11,8 @@ def get_catalog():
     Each unique item combination must have only a single price.
     """
 
+    # write future logic to sell based on what has been selling recently / rotate each day based on inventory
+
     plan = []
 
     with db.engine.begin() as connection:
@@ -27,6 +29,13 @@ def get_catalog():
         ).fetchall()
 
         for row in result:
-            plan.append({"sku": row.sku, "quantity": row.inventory, "price": row.price, "potion_type": row.type})
+            plan.append(
+                {
+                    "sku": row.sku,
+                    "quantity": row.inventory,
+                    "price": row.price,
+                    "potion_type": row.type,
+                }
+            )
 
     return plan
