@@ -87,10 +87,12 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         ml_arr = [r_ml, g_ml, b_ml, d_ml]
         current_ml = sum(ml_arr)
 
-        if gold < 240 and potions >= 5: # if low gold and still have potions, wait for potions to sell before barreling
+        # if low gold and still have potions, wait for potions to sell before barreling
+        # if high ml, stop buying barrels to save some gold.
+        if (gold < 240 and potions >= 5) or (
+            ml_arr[1] > 1000 and ml_arr[2] > 1000 and ml_arr[3] > 1000
+        ):
             return []
-        elif gold < 240 and potions < 5:
-            type_selected = random.randint(0, 3)
 
         # future threshold logic:
         # write a limit on buying based on how much ml we have / potions we have in relation to ml_capacity
@@ -110,7 +112,9 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             ml_limit = ml_capacity - current_ml
             if ml < threshold:
                 potion_type = [int(j == i) for j in range(4)]
-                if gold < 240: # if gold less than 240, decrement gold each iteration. if not, do not.
+                if (
+                    gold < 240
+                ):  # if gold less than 240, decrement gold each iteration. if not, do not.
                     gold_dec = True
 
                 barrel_purchase = create_wpp(
@@ -119,7 +123,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                     potion_type,
                     gold / 4 if (not gold_dec) else gold,
                     ml_limit,
-                    ml_arr
+                    ml_arr,
                 )
                 if barrel_purchase is not None:
                     price = next(
@@ -133,7 +137,9 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                         if item.sku == barrel_purchase["sku"]
                     )
                     plan.append(barrel_purchase)
-                    if (gold_dec): # not decremented when gold can be divisible by 4 for more variety
+                    if (
+                        gold_dec
+                    ):  # not decremented when gold can be divisible by 4 for more variety
                         gold -= price * barrel_purchase["quantity"]
                     current_ml += ml_per_barrel * barrel_purchase["quantity"]
 
@@ -141,7 +147,12 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
 
 
 def create_wpp(
-    wholesale_catalog: list[Barrel], plan: list[Barrel], potion_type, gold, ml_limit, mls
+    wholesale_catalog: list[Barrel],
+    plan: list[Barrel],
+    potion_type,
+    gold,
+    ml_limit,
+    mls,
 ):
     """ """
     gold = int(gold)
