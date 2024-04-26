@@ -127,7 +127,7 @@ def get_bottle_plan():
                 continue
             else:
                 max = max_quantity(mls, row.type)
-                print("max: " + str(max))
+                # print("max: " + str(max))
                 if max == 0:
                     continue
 
@@ -143,7 +143,7 @@ def get_bottle_plan():
 
                 plan.append({"potion_type": row.type, "quantity": cap_quantity})
 
-    print(plan)
+    # print("bottling plan: " + str(plan))
     return plan
 
 
