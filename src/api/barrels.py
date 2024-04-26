@@ -89,9 +89,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
 
         # if low gold and still have potions, wait for potions to sell before barreling
         # if high ml, stop buying barrels to save some gold.
-        if (gold < 240 and potions >= 5) or (
-            ml_arr[0] > 1000 and ml_arr[1] > 1000 and ml_arr[2] > 1000
-        ):
+        if gold < 240 and potions >= 5:
             return []
 
         # future threshold logic:
@@ -109,6 +107,8 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         plan = []
 
         for i, ml in enumerate(ml_arr):
+            if ml > 1500:
+                continue
             ml_limit = ml_capacity - current_ml
             if ml < threshold:
                 potion_type = [int(j == i) for j in range(4)]
