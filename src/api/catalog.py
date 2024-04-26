@@ -22,7 +22,7 @@ def get_catalog():
 
         result = connection.execute(
             sqlalchemy.text(
-                "SELECT * FROM potions WHERE sku IN ('GREEN_POTION', 'BLUE_POTION', 'PEPPER_POTION', 'RED_POTION') AND inventory > 0"
+                "SELECT * FROM potions WHERE sku IN ('GREEN_POTION', 'BLUE_POTION', 'PEPPER_POTION', 'RED_POTION', 'RGB_POTION', 'SWAMP_POTION') AND inventory > 0"
             )
         ).fetchall()
 
