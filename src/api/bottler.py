@@ -75,6 +75,11 @@ def get_bottle_plan():
 
     plan = []
     with db.engine.begin() as connection:
+        potions = connection.execute(
+            sqlalchemy.text(
+                "SELECT SUM(potions_ledger.quantity) FROM potions_ledger"
+            )
+        ).scalar_one()
         result = connection.execute(
             sqlalchemy.text(
                 "SELECT type, price FROM potions WHERE sku in ('RED_POTION', 'GREEN_POTION', 'BLUE_POTION', 'BERRY_POTION', 'PEPPER_POTION', 'RGB_POTION')"
@@ -88,11 +93,6 @@ def get_bottle_plan():
         potion_capacity = connection.execute(
             sqlalchemy.text(
                 "SELECT potion_capacity FROM constants"
-            )
-        ).scalar_one()
-        potions = connection.execute(
-            sqlalchemy.text(
-                "SELECT SUM(potions_ledger.quantity) FROM potions_ledger"
             )
         ).scalar_one()
 

@@ -25,6 +25,7 @@ def reset():
         connection.execute(sqlalchemy.text("TRUNCATE carts CASCADE"))
         connection.execute(sqlalchemy.text("TRUNCATE processed"))
         connection.execute(sqlalchemy.text("INSERT INTO ml_ledger DEFAULT VALUES"))
+        connection.execute(sqlalchemy.text("INSERT INTO potions_ledger (quantity, sku) VALUES (0, 'RED_POTION')"))
         connection.execute(
             sqlalchemy.text("INSERT INTO gold_ledger (gold) VALUES (100)")
         )
