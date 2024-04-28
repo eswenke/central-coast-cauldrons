@@ -28,6 +28,9 @@ def reset():
         connection.execute(
             sqlalchemy.text("INSERT INTO gold_ledger (gold) VALUES (100)")
         )
+        connection.execute(
+            sqlalchemy.text("UPDATE constants SET potion_capacity = 50, ml_capacity = 10000")
+        )
         # an empty potions ledger will return None ******************
 
     return "OK"
