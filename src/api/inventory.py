@@ -18,13 +18,18 @@ def get_inventory():
     """ """
 
     with db.engine.begin() as connection:
-        result = connection.execute(
+        potions = connection.execute(
+            sqlalchemy.text("SELECT SUM(potions_ledger.quantity) FROM potions_ledger")
+        ).scalar_one()
+        gold = connection.execute(
+            sqlalchemy.text("SELECT SUM(gold_ledger.gold) FROM gold_ledger")
+        ).scalar_one()
+        ml = connection.execute(
             sqlalchemy.text(
-                "SELECT green_ml, red_ml, blue_ml, dark_ml, gold, potions FROM global_inventory"
+                "SELECT SUM(ml_ledger.red_ml + ml_ledger.green_ml + ml_ledger.blue_ml + ml_ledger.dark_ml) FROM ml_ledger"
             )
-        ).first()
-        green_ml, red_ml, blue_ml, dark_ml, gold, potions = result
-        ml = green_ml + red_ml + blue_ml + dark_ml
+        ).scalar_one()
+
         print(ml)
         print(gold)
 
@@ -40,28 +45,30 @@ def get_capacity_plan():
     """
 
     with db.engine.begin() as connection:
-        result = connection.execute(
+        potions = connection.execute(
+            sqlalchemy.text("SELECT SUM(potions_ledger.quantity) FROM potions_ledger")
+        ).scalar_one()
+        gold = connection.execute(
+            sqlalchemy.text("SELECT SUM(gold_ledger.gold) FROM gold_ledger")
+        ).scalar_one()
+        ml = connection.execute(
             sqlalchemy.text(
-                "SELECT green_ml, red_ml, blue_ml, dark_ml, potions, potion_capacity, ml_capacity, gold FROM global_inventory"
+                "SELECT SUM(ml_ledger.red_ml + ml_ledger.green_ml + ml_ledger.blue_ml + ml_ledger.dark_ml) FROM ml_ledger"
+            )
+        ).scalar_one()
+        results = connection.execute(
+            sqlalchemy.text(
+                "SELECT potion_capacity, ml_capacity FROM constants"
             )
         ).first()
-        (
-            green_ml,
-            red_ml,
-            blue_ml,
-            dark_ml,
-            potions,
-            potion_capacity,
-            ml_capacity,
-            gold,
-        ) = result
-        ml = green_ml + red_ml + blue_ml + dark_ml
+
+        potion_capacity, ml_capacity = results
         pot_cap = 0
         ml_cap = 0
 
         if gold >= 3000:
-            pot_cap = 1 if potion_capacity - potions < 15 else 0
-            ml_cap = 1 if ml_capacity - ml < 2500 else 0
+            pot_cap = 1 if potion_capacity - potions <= 15 else 0
+            ml_cap = 1 if ml_capacity - ml <= 2500 else 0
 
     return {
         "potion_capacity": pot_cap,
@@ -97,10 +104,20 @@ def deliver_capacity_plan(capacity_purchase: CapacityPurchase, order_id: int):
 
         connection.execute(
             sqlalchemy.text(
-                """UPDATE global_inventory SET 
+                """UPDATE constants SET 
                 potion_capacity = potion_capacity + (:pot_cap * 50), 
-                ml_capacity = ml_capacity + (:ml_cap * 10000),
-                gold = gold - (1000 * (:pot_cap + :ml_cap))"""
+                ml_capacity = ml_capacity + (:ml_cap * 10000)"""
+            ),
+            [
+                {
+                    "pot_cap": capacity_purchase.potion_capacity,
+                    "ml_cap": capacity_purchase.ml_capacity,
+                }
+            ],
+        )
+        connection.execute(
+            sqlalchemy.text(
+                """INSERT INTO gold_ledger (gold) VALUES (-1000 * (:pot_cap + :ml_cap))"""
             ),
             [
                 {

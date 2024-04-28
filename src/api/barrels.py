@@ -58,14 +58,19 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
         connection.execute(
             sqlalchemy.text(
                 """
-                UPDATE global_inventory 
-                SET green_ml = green_ml + :g_ml,
-                red_ml = red_ml + :r_ml,
-                blue_ml = blue_ml + :b_ml,
-                dark_ml = dark_ml + :d_ml,
-                gold = gold - :price"""
+                INSERT INTO ml_ledger (red_ml, green_ml, blue_ml, dark_ml) 
+                VALUES (:r_ml, :g_ml, :b_ml, :d_ml)"""
             ),
-            [{"g_ml": g_ml, "r_ml": r_ml, "b_ml": b_ml, "d_ml": d_ml, "price": price}],
+            [{"r_ml": r_ml, "g_ml": g_ml, "b_ml": b_ml, "d_ml": d_ml}],
+        )
+
+        connection.execute(
+            sqlalchemy.text(
+                """
+                INSERT INTO gold_ledger (gold) 
+                VALUES (-:price)"""
+            ),
+            [{"price": price}],
         )
 
     return "OK"
@@ -77,13 +82,35 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     """ """
     print(wholesale_catalog)
 
+    
+
     with db.engine.begin() as connection:
-        result = connection.execute(
+        mls = connection.execute(
             sqlalchemy.text(
-                "SELECT green_ml, red_ml, blue_ml, dark_ml, gold, ml_capacity, potions FROM global_inventory"
+                "SELECT SUM(ml_ledger.red_ml), SUM(ml_ledger.green_ml), SUM(ml_ledger.blue_ml), SUM(ml_ledger.dark_ml) FROM ml_ledger"
             )
         ).first()
-        g_ml, r_ml, b_ml, d_ml, gold, ml_capacity, potions = result
+
+        ml_capacity = connection.execute(
+            sqlalchemy.text(
+                "SELECT ml_capacity FROM constants"
+            )
+        ).scalar_one()
+
+        potions = connection.execute(
+            sqlalchemy.text(
+                "SELECT SUM(potions_ledger.quantity) FROM potions_ledger"
+            )
+        ).scalar_one()
+
+        gold = connection.execute(
+            sqlalchemy.text(
+                "SELECT SUM(gold_ledger.gold) FROM gold_ledger"
+            )
+        ).scalar_one()
+        
+        r_ml, g_ml, b_ml, d_ml = mls
+        print(mls)
         ml_arr = [r_ml, g_ml, b_ml, d_ml]
         current_ml = sum(ml_arr)
 
@@ -97,6 +124,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         # change thresholds based on ml_capacity
         # change barreling function based on if we are not poor
         # change barreling function based on if LARGE threshold is active
+        # maybe add logic that doesn't /4 if we only have one or two barrels we need to buy and we have a lot of money?
 
         selling_large = any(item.sku.startswith("LARGE") for item in wholesale_catalog)
         normal_threshold = 3000

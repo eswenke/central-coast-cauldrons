@@ -145,10 +145,11 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         connection.execute(
             sqlalchemy.text(
                 """
-                UPDATE potions
-                SET inventory = potions.inventory - cart_items.quantity
-                FROM cart_items
-                WHERE cart_items.cart = :cart_id and potions.sku = cart_items.potion"""
+                INSERT INTO potions_ledger (quantity, sku)
+                SELECT -cart_items.quantity, cart_items.potion
+                FROM potions
+                JOIN cart_items ON potions.sku = cart_items.potion
+                WHERE cart_items.cart = :cart_id"""
             ),
             [{"cart_id": cart_id}],
         )
@@ -170,9 +171,9 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
 
         connection.execute(
             sqlalchemy.text(
-                "UPDATE global_inventory SET potions = potions - :sum_potions, gold = gold + :sum_gold"
+                "INSERT INTO gold_ledger (gold) VALUES (:sum_gold)"
             ),
-            [{"sum_potions": sum_potions, "sum_gold": sum_gold}],
+            [{"sum_gold": sum_gold}],
         ),
 
     return {"total_potions_bought": sum_potions, "total_gold_paid": sum_gold}

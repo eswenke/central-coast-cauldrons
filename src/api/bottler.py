@@ -45,7 +45,8 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
 
             connection.execute(
                 sqlalchemy.text(
-                    "UPDATE potions SET inventory = inventory + :quantity WHERE type = :type"
+                    """INSERT INTO potions_ledger (quantity, sku) 
+                    VALUES (:quantity, (SELECT potions.sku FROM potions WHERE type = :type))"""
                 ),
                 [{"quantity": quantity, "type": potion_type}],
             )
@@ -53,21 +54,11 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
         connection.execute(
             sqlalchemy.text(
                 """
-                UPDATE global_inventory 
-                SET green_ml = green_ml - :g_ml,
-                red_ml = red_ml - :r_ml,
-                blue_ml = blue_ml - :b_ml,
-                dark_ml = dark_ml - :d_ml,
-                potions = potions + :global_q"""
+                INSERT INTO ml_ledger (red_ml, green_ml, blue_ml, dark_ml) 
+                VALUES (-:r_ml, -:g_ml, -:b_ml, -:d_ml)"""
             ),
             [
-                {
-                    "g_ml": mls[1],
-                    "r_ml": mls[0],
-                    "b_ml": mls[2],
-                    "d_ml": mls[3],
-                    "global_q": global_q,
-                },
+                {"r_ml": mls[0], "g_ml": mls[1], "b_ml": mls[2], "d_ml": mls[3]},
             ],
         )
 
@@ -80,25 +71,50 @@ def get_bottle_plan():
     Go from barrel to bottle.
     """
 
+    # hardcode bottling for now... include red, blue, green, rgb, berry, pepper
+
     plan = []
     with db.engine.begin() as connection:
         result = connection.execute(
             sqlalchemy.text(
-                "SELECT green_ml, red_ml, blue_ml, dark_ml, potions, potion_capacity FROM global_inventory"
-            )
-        ).first()
-        green_ml, red_ml, blue_ml, dark_ml, potions, potions_capacity = result
-        mls = [red_ml, green_ml, blue_ml, dark_ml]
-        quantity = 0
-
-        result = connection.execute(
-            sqlalchemy.text(
-                "SELECT inventory, type FROM potions WHERE sku IN ('PEPPER_POTION', 'BERRY_POTION', 'SWAMP_POTION', 'RGB_POTION', 'RED_POTION', 'BLUE_POTION')"
+                "SELECT type, price FROM potions WHERE sku in ('RED_POTION', 'GREEN_POTION', 'BLUE_POTION', 'BERRY_POTION', 'PEPPER_POTION', 'RGB_POTION')"
             )
         ).fetchall()
+        mls = connection.execute(
+            sqlalchemy.text(
+                "SELECT SUM(ml_ledger.red_ml), SUM(ml_ledger.green_ml), SUM(ml_ledger.blue_ml), SUM(ml_ledger.dark_ml) FROM ml_ledger"
+            )
+        ).first()
+        potion_capacity = connection.execute(
+            sqlalchemy.text(
+                "SELECT potion_capacity FROM constants"
+            )
+        ).scalar_one()
+        potions = connection.execute(
+            sqlalchemy.text(
+                "SELECT SUM(potions_ledger.quantity) FROM potions_ledger"
+            )
+        ).scalar_one()
 
-        # write future threshold logic to increase based on potion capacity from global inventory
+        red_ml, green_ml, blue_ml, dark_ml = mls
+        mls = [red_ml, green_ml, blue_ml, dark_ml]
         threshold = 8
+        quantity = 0
+        potions_left = potion_capacity - potions
+        max_bottle_each = potions_left // len(result)
+            
+        for row in result:
+            max_from_mls = max_quantity(mls, row.type)
+            if max_from_mls == 0:
+                continue
+
+            final_quantity = max_from_mls if max_from_mls <= max_bottle_each else max_bottle_each
+            mls = sub_ml(mls, row.type, final_quantity)
+
+            plan.append({"potion_type": row.type, "quantity": final_quantity})
+
+        
+        return plan
 
         # current logic:
         # bottle each type the max it can up to its potion capacity
@@ -119,33 +135,31 @@ def get_bottle_plan():
         # keep track of that potions capacity in relation to the threshold
         # keep track of the global inventory's potion capacity
 
-        for row in result:
-            # print(row.inventory)
-            # print(mls)
-            # print(row)
-            if row.inventory >= threshold:
-                continue
-            else:
-                max = max_quantity(mls, row.type)
-                # print("max: " + str(max))
-                if max == 0:
-                    continue
+        # for row in result:
+        #     # print(row.inventory)
+        #     # print(mls)
+        #     # print(row)
+        #     if row.quantity >= threshold:
+        #         continue
+        #     else:
+        #         max = max_quantity(mls, row.type)
+        #         # print("max: " + str(max))
+        #         if max == 0:
+        #             continue
 
-                quantity = threshold - row.inventory
-                final_quantity = quantity if max >= quantity else max
-                cap_quantity = (
-                    final_quantity
-                    if (final_quantity + potions) <= potions_capacity
-                    else (potions_capacity - potions)
-                )
-                potions += cap_quantity
-                mls = sub_ml(mls, row.type, cap_quantity)
+        #         quantity = threshold - row.inventory
+        #         final_quantity = quantity if max >= quantity else max
+        #         cap_quantity = (
+        #             final_quantity
+        #             if (final_quantity + potions) <= potion_capacity
+        #             else (potion_capacity - potions)
+        #         )
+        #         potions += cap_quantity
+        #         mls = sub_ml(mls, row.type, cap_quantity)
 
-                plan.append({"potion_type": row.type, "quantity": cap_quantity})
+        #         plan.append({"potion_type": row.type, "quantity": cap_quantity})
 
     # print("bottling plan: " + str(plan))
-    return plan
-
 
 def max_quantity(arr1, arr2):
     result = []
