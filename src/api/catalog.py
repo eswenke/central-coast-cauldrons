@@ -93,3 +93,28 @@ def get_catalog():
             )
 
     return plan
+
+
+def get_day():
+    with db.engine.begin() as connection:
+        result = connection.execute(
+            sqlalchemy.text(
+                """
+                    SELECT day
+                    FROM timestamps
+                    ORDER BY id DESC
+                    LIMIT 1;
+                """
+                )
+            ).first()
+        return result[0] 
+
+
+def firesale():
+    # return a list of potions to change the price of to very cheap because they are not selling
+    # maybe pick a max of 2 potions every catalog that will have their prices lowered based on:
+        # grab the first two potion type that have not sold in over a day:
+            # and put their price to 10 (ONLY IN THE PLAN, NOT THE ACTUAL POTIONS TABLE)
+        # add those to the end of the catalog
+
+    return

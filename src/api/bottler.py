@@ -71,9 +71,9 @@ def get_bottle_plan():
     Go from barrel to bottle.
     """
 
-    # hardcode bottling for now... include red, blue, green, rgb, berry, pepper
-
+    pot_list = which_potions()
     plan = []
+
     with db.engine.begin() as connection:
         potions = connection.execute(
             sqlalchemy.text(
@@ -82,8 +82,8 @@ def get_bottle_plan():
         ).scalar_one()
         result = connection.execute(
             sqlalchemy.text(
-                "SELECT type, price FROM potions WHERE sku in ('RED_POTION', 'GREEN_POTION', 'BLUE_POTION', 'BERRY_POTION', 'PEPPER_POTION', 'RGB_POTION')"
-            )
+                "SELECT type, price FROM potions WHERE sku in :pot_list"
+            ),[{"pot_list": pot_list}]
         ).fetchall()
         mls = connection.execute(
             sqlalchemy.text(
@@ -95,6 +95,8 @@ def get_bottle_plan():
                 "SELECT potion_capacity FROM constants"
             )
         ).scalar_one()
+
+        print(result)
 
         red_ml, green_ml, blue_ml, dark_ml = mls
         mls = [red_ml, green_ml, blue_ml, dark_ml]
@@ -113,7 +115,6 @@ def get_bottle_plan():
 
             plan.append({"potion_type": row.type, "quantity": final_quantity})
 
-        
         return plan
 
         # current logic:
@@ -178,6 +179,60 @@ def sub_ml(arr1, arr2, max):
     for x, y in zip(arr1, arr2):
         result.append(x - (max * y))
     return result
+
+def get_day():
+    with db.engine.begin() as connection:
+        result = connection.execute(
+            sqlalchemy.text(
+                """
+                    SELECT day
+                    FROM timestamps
+                    ORDER BY id DESC
+                    LIMIT 1;
+                """
+                )
+            ).first()[0]
+        return result
+
+def which_potions():
+    # return a list of potions to pass to my result query
+    # goal is to bottle potions that i know will sell   
+
+    # if there are not 6 potion types with a quantity greater than 0
+        # just return those that do have quantity > 0 with a select
+    # elif there are more than 6 potion types with quantity greater than 0
+
+        # bottle based on what day it is (hardcode IN THE DB):
+            # if edgeday, bottle 
+            # if bloomday, bottle more red potions for fighters / rgb potions for monks
+            # if arcanaday, bottle 
+            # if hearthday, bottle
+            # if crownday, bottle 
+            # if blesseday, bottle
+            # if soulday, bottle green and blue potions / green and blue mixes
+
+        # more advanced bottling plan based on popularity:
+        # make a bottling plan that just selects random potion types to bottle (not dark if dont have any):
+            # run this bottling plan for a week and gather intel into a new table (referenced below)
+            # for each day, show what potions were bottled and what potions sold the most
+        # if it has been 7 days since the last reset, start bottling based on sells the most:
+            # make a new table that selects the most popular potions from each day
+            # table will have an entry for each day of the potions week, along with the top 4 selling potions
+            # leaving 2 for firesale spots
+
+    with db.engine.begin() as connection:
+        day = get_day()
+        pot_list = connection.execute(
+            sqlalchemy.text(
+                """
+                    SELECT pot_pref
+                    FROM preferences
+                    WHERE day = :day
+                """
+                ),[{"day": day}]
+            ).first()[0]
+
+    return tuple(pot_list)
 
 
 if __name__ == "__main__":
