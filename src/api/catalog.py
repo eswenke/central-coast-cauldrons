@@ -106,8 +106,9 @@ def get_day():
                     LIMIT 1;
                 """
                 )
-            ).first()
-        return result[0] 
+            ).first()[0]
+
+        return result
 
 
 def firesale():

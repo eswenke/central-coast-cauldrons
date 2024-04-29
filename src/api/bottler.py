@@ -96,15 +96,14 @@ def get_bottle_plan():
             )
         ).scalar_one()
 
-        print(result)
-
         red_ml, green_ml, blue_ml, dark_ml = mls
         mls = [red_ml, green_ml, blue_ml, dark_ml]
-        threshold = 8
-        quantity = 0
         potions_left = potion_capacity - potions
         max_bottle_each = potions_left // len(result)
+        threshold = 0
             
+        # need threshold logic soon (increase thresholds on potions that are selling, decrease on those that are not)
+
         for row in result:
             max_from_mls = max_quantity(mls, row.type)
             if max_from_mls == 0:
