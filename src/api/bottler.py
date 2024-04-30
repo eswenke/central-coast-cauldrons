@@ -110,14 +110,14 @@ def get_bottle_plan():
         mls = [red_ml, green_ml, blue_ml, dark_ml]
         potions_left = potion_capacity - potions
         max_bottle_each = potions_left // len(result)
-        threshold = potion_capacity // 6
+        threshold = potion_capacity // len(result)
         i = 0
             
         # need threshold logic soon (increase thresholds on potions that are selling, decrease on those that are not)
 
         for row in result:
             max_from_mls = max_quantity(mls, row.type)
-            if max_from_mls == 0 or inventory[i] >= 8:
+            if max_from_mls == 0 or inventory[i] >= threshold:
                 i += 1
                 continue
 
