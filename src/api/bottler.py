@@ -104,13 +104,13 @@ def get_bottle_plan():
                 ),[{"sku": row.sku}]
             ).scalar_one())
 
-        print(inventory)
+        # print(inventory)
 
         red_ml, green_ml, blue_ml, dark_ml = mls
         mls = [red_ml, green_ml, blue_ml, dark_ml]
         potions_left = potion_capacity - potions
         max_bottle_each = potions_left // len(result)
-        threshold = 8
+        threshold = potion_capacity // 6
         i = 0
             
         # need threshold logic soon (increase thresholds on potions that are selling, decrease on those that are not)
@@ -125,7 +125,7 @@ def get_bottle_plan():
             final_quantity = max_from_mls if max_from_mls <= max_bottle_each else max_bottle_each
             final_quantity = final_quantity if final_quantity <= till_cap else till_cap
             
-            # if is_pure(row.type):
+            # if is_pure(row.type): # intention to split up bottling evenly between mixed and pure
             #     final_quantity //= 2
 
             mls = sub_ml(mls, row.type, final_quantity)

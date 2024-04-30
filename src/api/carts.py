@@ -5,6 +5,10 @@ from enum import Enum
 import sqlalchemy
 from sqlalchemy.exc import IntegrityError
 from src import database as db
+from collections import defaultdict
+from operator import itemgetter
+import random
+
 
 router = APIRouter(
     prefix="/carts",
@@ -88,9 +92,23 @@ def post_visits(visit_id: int, customers: list[Customer]):
     Which customers visited the shop today?
     """
     print(customers)
+    id = get_recent_id()
 
-    # with db.engine.begin() as connection:
-    #     result = connection.execute(sqlalchemy.text("SELECT num_green_potions FROM global_inventory")).scalar_one()
+    class_counts = defaultdict(int)
+    for customer in customers:
+        class_counts[customer.character_class] += 1
+
+    sorted_class_counts = sorted(class_counts.items(), key=itemgetter(1), reverse=True)
+    visits = [f"{class_name}: {count}" for class_name, count in sorted_class_counts]
+
+    with db.engine.begin() as connection:
+        connection.execute(
+            sqlalchemy.text(
+                """
+                UPDATE timestamps SET visits = :visits WHERE id = :id
+                """
+            ),[{"visits": visits, "id": id}]
+        )
 
     return "OK"
 
@@ -104,7 +122,13 @@ def create_cart(new_cart: Customer):
             sqlalchemy.text(
                 "INSERT INTO carts (customer, class, level) VALUES (:customer, :class, :level) RETURNING id"
             ),
-            [{"customer": new_cart.customer_name, "class": new_cart.character_class, "level": new_cart.level}],
+            [
+                {
+                    "customer": new_cart.customer_name,
+                    "class": new_cart.character_class,
+                    "level": new_cart.level,
+                }
+            ],
         ).scalar_one()
 
     return {"cart_id": id}
@@ -170,10 +194,23 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         sum_gold, sum_potions = result
 
         connection.execute(
-            sqlalchemy.text(
-                "INSERT INTO gold_ledger (gold) VALUES (:sum_gold)"
-            ),
+            sqlalchemy.text("INSERT INTO gold_ledger (gold) VALUES (:sum_gold)"),
             [{"sum_gold": sum_gold}],
         ),
 
     return {"total_potions_bought": sum_potions, "total_gold_paid": sum_gold}
+
+def get_recent_id():
+    with db.engine.begin() as connection:
+        result = connection.execute(
+            sqlalchemy.text(
+                """
+                    SELECT id
+                    FROM timestamps
+                    ORDER BY id DESC
+                    LIMIT 1;
+                """
+                )
+            ).first()[0]
+
+        return result
