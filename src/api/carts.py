@@ -93,6 +93,8 @@ def post_visits(visit_id: int, customers: list[Customer]):
     """
     print(customers)
     id = get_recent_id()
+    if id is None:
+        return "OK"
 
     class_counts = defaultdict(int)
     for customer in customers:
@@ -213,4 +215,4 @@ def get_recent_id():
                 )
             ).first()[0]
 
-        return result
+    return result
