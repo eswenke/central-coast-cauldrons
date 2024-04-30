@@ -82,7 +82,7 @@ def get_bottle_plan():
         ).scalar_one()
         result = connection.execute(
             sqlalchemy.text(
-                "SELECT type, price FROM potions WHERE sku in :pot_list"
+                "SELECT sku, type, price FROM potions WHERE sku in :pot_list"
             ),[{"pot_list": pot_list}]
         ).fetchall()
         mls = connection.execute(
@@ -96,23 +96,42 @@ def get_bottle_plan():
             )
         ).scalar_one()
 
+        inventory = []
+        for row in result:
+            inventory.append(connection.execute(
+                sqlalchemy.text(
+                    "SELECT COALESCE(SUM(quantity), 0) FROM potions_ledger WHERE sku = :sku"
+                ),[{"sku": row.sku}]
+            ).scalar_one())
+
+        print(inventory)
+
         red_ml, green_ml, blue_ml, dark_ml = mls
         mls = [red_ml, green_ml, blue_ml, dark_ml]
         potions_left = potion_capacity - potions
         max_bottle_each = potions_left // len(result)
-        threshold = 0
+        threshold = 8
+        i = 0
             
         # need threshold logic soon (increase thresholds on potions that are selling, decrease on those that are not)
 
         for row in result:
             max_from_mls = max_quantity(mls, row.type)
-            if max_from_mls == 0:
+            if max_from_mls == 0 or inventory[i] >= 8:
+                i += 1
                 continue
 
+            till_cap = threshold - inventory[i]
             final_quantity = max_from_mls if max_from_mls <= max_bottle_each else max_bottle_each
+            final_quantity = final_quantity if final_quantity <= till_cap else till_cap
+            
+            # if is_pure(row.type):
+            #     final_quantity //= 2
+
             mls = sub_ml(mls, row.type, final_quantity)
 
             plan.append({"potion_type": row.type, "quantity": final_quantity})
+            i += 1
 
         return plan
 
@@ -172,12 +191,21 @@ def max_quantity(arr1, arr2):
     # print(result)
     return min(result)
 
-
 def sub_ml(arr1, arr2, max):
     result = []
     for x, y in zip(arr1, arr2):
         result.append(x - (max * y))
     return result
+
+def is_pure(type):
+    res = 0
+    for i in range(len(type)):
+        if type[i] > 0:
+            res += 1
+
+    if res > 1:
+        return False
+    return True
 
 def get_day():
     with db.engine.begin() as connection:
