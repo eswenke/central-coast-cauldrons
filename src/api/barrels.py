@@ -110,14 +110,11 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         ).scalar_one()
         
         r_ml, g_ml, b_ml, d_ml = mls
-        print(mls)
         ml_arr = [r_ml, g_ml, b_ml, d_ml]
         current_ml = sum(ml_arr)
 
         # if low gold and still have potions, wait for potions to sell before barreling
         # if high ml, stop buying barrels to save some gold.
-        if gold < 240 and potions >= 5:
-            return []
 
         # future threshold logic:
         # write a limit on buying based on how much ml we have / potions we have in relation to ml_capacity
