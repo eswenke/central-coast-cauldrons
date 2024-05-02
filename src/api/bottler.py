@@ -89,6 +89,19 @@ def which_potions():
     # table will have an entry for each day of the potions week, along with the top 4 selling potions
     # leaving 2 for firesale spots
 
+    # for bottling randomly, uses subquery to get all potions that do not have a dark ml
+    # SELECT DISTINCT *, RANDOM() as random_value
+    # FROM  (
+    #         SELECT sku
+    #         FROM potions
+    #         WHERE type[array_length(type, 1)] = 0
+    #     ) as nondark
+    # ORDER BY random_value
+    # LIMIT 6;
+    # if we need to base this on what mls we have, we could maybe do:
+    # HERE type[1] < 60 AND type[2] < 60 AND type[3] < 1 AND type[4] < 1, where the number after < is :ml[1] or 2,3,4
+
+
     with db.engine.begin() as connection:
         day = get_day()
         pot_list = connection.execute(

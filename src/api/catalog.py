@@ -5,54 +5,77 @@ from src import database as db
 router = APIRouter()
 
 
+def which_potions():
+    with db.engine.begin() as connection:
+        day = get_day()
+        pot_list = connection.execute(
+            sqlalchemy.text(
+                """
+                    SELECT pot_pref
+                    FROM preferences
+                    WHERE day = :day
+                """
+            ),
+            [{"day": day}],
+        ).first()[0]
+
+    return tuple(pot_list)
+
 @router.get("/catalog/", tags=["catalog"])
 def get_catalog():
     """
     Each unique item combination must have only a single price.
     """
-
+    pot_list = which_potions()
     plan = []
     limit = 6
     # firesale()
 
     with db.engine.begin() as connection:
-        # get the 6 most recent, unique potions sold
         result = connection.execute(
             sqlalchemy.text(
-                """
-                SELECT DISTINCT sku
-                FROM (
-                    SELECT *
-                    FROM potions_ledger
-                    WHERE quantity < 0
-                    ORDER BY timestamp DESC
-                ) as skus
-                LIMIT 6
-                """
-            )
+                "SELECT sku, type, price FROM potions WHERE sku in :pot_list"
+            ),
+            [{"pot_list": pot_list}],
         ).fetchall()
 
-        if len(result) < 6:
-            # if there are not 6 recently sold potions, the rest in the catalog will be recently bottled
-            limit -= len(result)
-            added_result = connection.execute(
-                sqlalchemy.text(
-                    """
-                SELECT DISTINCT sku
-                FROM (
-                    SELECT *
-                    FROM potions_ledger
-                    ORDER BY timestamp DESC
-                ) as skus
-                LIMIT :limit
-                """
-                ),
-                [{"limit": limit}],
-            ).fetchall()
+        # # get the 6 most recent, unique potions sold
+        # result = connection.execute(
+        #     sqlalchemy.text(
+        #         """
+        #         SELECT DISTINCT sku
+        #         FROM (
+        #             SELECT *
+        #             FROM potions_ledger
+        #             WHERE quantity < 0
+        #             ORDER BY timestamp DESC
+        #         ) as skus
+        #         LIMIT 6
+        #         """
+        #     )
+        # ).fetchall()
 
-            for i in range(len(added_result)):
-                if added_result[i] not in result:
-                    result.append(added_result[i])
+        # if len(result) < 6:
+        #     # if there are not 6 recently sold potions, the rest in the catalog will be recently bottled
+        #     limit -= len(result)
+        #     added_result = connection.execute(
+        #         sqlalchemy.text(
+        #             """
+        #         SELECT DISTINCT sku
+        #         FROM (
+        #             SELECT *
+        #             FROM potions_ledger
+        #             ORDER BY timestamp DESC
+        #         ) as skus
+        #         LIMIT :limit
+        #         """
+        #         ),
+        #         [{"limit": limit}],
+        #     ).fetchall()
+
+        #     for i in range(len(added_result)):
+        #         if added_result[i] not in result:
+        #             result.append(added_result[i])
                 
 
         for row in result:
