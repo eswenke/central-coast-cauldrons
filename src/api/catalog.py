@@ -32,41 +32,48 @@ def get_catalog():
     # firesale()
 
     with db.engine.begin() as connection:
-        # get the 6 most recent, unique potions sold
         result = connection.execute(
             sqlalchemy.text(
-                """
-                SELECT DISTINCT sku
-                FROM (
-                    SELECT *
-                    FROM potions_ledger
-                    WHERE quantity < 0
-                    ORDER BY timestamp DESC
-                ) as skus
-                LIMIT 3
-                """
-            )
-        ).fetchall()
-
-        limit -= len(result)
-        added_result = connection.execute(
-            sqlalchemy.text(
-                """
-            SELECT DISTINCT sku
-            FROM (
-                SELECT *
-                FROM potions_ledger
-                ORDER BY timestamp DESC
-            ) as skus
-            LIMIT :limit
-            """
+                "SELECT sku, type, price FROM potions WHERE sku in :pot_list"
             ),
-            [{"limit": limit}],
+            [{"pot_list": pot_list}],
         ).fetchall()
 
-        for i in range(len(added_result)):
-            if added_result[i] not in result:
-                result.append(added_result[i])
+        # # get the 6 most recent, unique potions sold
+        # result = connection.execute(
+        #     sqlalchemy.text(
+        #         """
+        #         SELECT DISTINCT sku
+        #         FROM (
+        #             SELECT *
+        #             FROM potions_ledger
+        #             WHERE quantity < 0
+        #             ORDER BY timestamp DESC
+        #         ) as skus
+        #         LIMIT 3
+        #         """
+        #     )
+        # ).fetchall()
+
+        # limit -= len(result)
+        # added_result = connection.execute(
+        #     sqlalchemy.text(
+        #         """
+        #     SELECT DISTINCT sku
+        #     FROM (
+        #         SELECT *
+        #         FROM potions_ledger
+        #         ORDER BY timestamp DESC
+        #     ) as skus
+        #     LIMIT :limit
+        #     """
+        #     ),
+        #     [{"limit": limit}],
+        # ).fetchall()
+
+        # for i in range(len(added_result)):
+        #     if added_result[i] not in result:
+        #         result.append(added_result[i])
             
 
     for row in result:
