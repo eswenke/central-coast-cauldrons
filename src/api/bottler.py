@@ -18,6 +18,123 @@ class PotionInventory(BaseModel):
     quantity: int
 
 
+def max_quantity(arr1, arr2):
+    result = []
+    for x, y in zip(arr1, arr2):
+        if y != 0:
+            result.append(x // y)
+        else:
+            result.append(float("inf"))
+
+    # print(result)
+    return min(result)
+
+
+def sub_ml(arr1, arr2, max):
+    result = []
+    for x, y in zip(arr1, arr2):
+        result.append(x - (max * y))
+    return result
+
+
+def is_pure(type):
+    res = 0
+    for i in range(len(type)):
+        if type[i] > 0:
+            res += 1
+
+    if res > 1:
+        return False
+    return True
+
+
+def get_day():
+    with db.engine.begin() as connection:
+        result = connection.execute(
+            sqlalchemy.text(
+                """
+                    SELECT day
+                    FROM timestamps
+                    ORDER BY id DESC
+                    LIMIT 1;
+                """
+            )
+        ).first()[0]
+        return result
+
+
+def which_potions():
+    # return a list of potions to pass to my result query
+    # goal is to bottle potions that i know will sell
+
+    # if there are not 6 potion types with a quantity greater than 0
+    # just return those that do have quantity > 0 with a select
+    # elif there are more than 6 potion types with quantity greater than 0
+
+    # bottle based on what day it is (hardcode IN THE DB):
+    # if edgeday, bottle
+    # if bloomday, bottle more red potions for fighters / rgb potions for monks
+    # if arcanaday, bottle
+    # if hearthday, bottle
+    # if crownday, bottle
+    # if blesseday, bottle
+    # if soulday, bottle green and blue potions / green and blue mixes
+
+    # more advanced bottling plan based on popularity:
+    # make a bottling plan that just selects random potion types to bottle (not dark if dont have any):
+    # run this bottling plan for a week and gather intel into a new table (referenced below)
+    # for each day, show what potions were bottled and what potions sold the most
+    # if it has been 7 days since the last reset, start bottling based on sells the most:
+    # make a new table that selects the most popular potions from each day
+    # table will have an entry for each day of the potions week, along with the top 4 selling potions
+    # leaving 2 for firesale spots
+
+    with db.engine.begin() as connection:
+        day = get_day()
+        pot_list = connection.execute(
+            sqlalchemy.text(
+                """
+                    SELECT pot_pref
+                    FROM preferences
+                    WHERE day = :day
+                """
+            ),
+            [{"day": day}],
+        ).first()[0]
+
+    return tuple(pot_list)
+
+
+def is_popular():
+    # if a potion type has sold multiple times in the last 6 hours, return true and then raise its threshold
+    # can keep threshold values in an array before bottling loop or something
+    # need smarter bottling logic. pot preferences is good for research purposes, but we need a more efficient
+    # bottling method. use is_poplar to bottle extra. maybe change pots pref to only have 2-3 potion types, and
+    # we focus our bottling on them?
+
+    # for example:
+    #   red pots sell back to back to back on bloomday
+    #   raise their threshold by 10 or so (increases with higher potion capacity and ml?)
+    #   space will be cleared by firesale and hopefully the sale of other potions normally
+
+    with db.engine.begin() as connection:
+        result = connection.execute(
+            sqlalchemy.text(
+                """
+                    SELECT DISTINCT sku
+                    FROM potions_ledger
+                    WHERE timestamp <= (SELECT MAX(timestamp) - interval '12 hours' FROM potions_ledger), quantity > 0
+                    ORDER BY timestamp DESC
+                    LIMIT 3;
+                """
+            )
+        ).fetchall()
+
+        print(result)
+
+    return
+
+
 @router.post("/deliver/{order_id}")
 def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int):
     """ """
@@ -42,6 +159,8 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
             potion_type = potion.potion_type
             for i in range(4):
                 mls[i] += potion_type[i] * potion.quantity
+
+            # build up a dictionary of what i want to insert, then isnert later
 
             connection.execute(
                 sqlalchemy.text(
@@ -76,14 +195,13 @@ def get_bottle_plan():
 
     with db.engine.begin() as connection:
         potions = connection.execute(
-            sqlalchemy.text(
-                "SELECT SUM(potions_ledger.quantity) FROM potions_ledger"
-            )
+            sqlalchemy.text("SELECT SUM(potions_ledger.quantity) FROM potions_ledger")
         ).scalar_one()
         result = connection.execute(
             sqlalchemy.text(
                 "SELECT sku, type, price FROM potions WHERE sku in :pot_list"
-            ),[{"pot_list": pot_list}]
+            ),
+            [{"pot_list": pot_list}],
         ).fetchall()
         mls = connection.execute(
             sqlalchemy.text(
@@ -91,18 +209,20 @@ def get_bottle_plan():
             )
         ).first()
         potion_capacity = connection.execute(
-            sqlalchemy.text(
-                "SELECT potion_capacity FROM constants"
-            )
+            sqlalchemy.text("SELECT potion_capacity FROM constants")
         ).scalar_one()
 
         inventory = []
+        # this can be changed to be similar to picture
         for row in result:
-            inventory.append(connection.execute(
-                sqlalchemy.text(
-                    "SELECT COALESCE(SUM(quantity), 0) FROM potions_ledger WHERE sku = :sku"
-                ),[{"sku": row.sku}]
-            ).scalar_one())
+            inventory.append(
+                connection.execute(
+                    sqlalchemy.text(
+                        "SELECT COALESCE(SUM(quantity), 0) FROM potions_ledger WHERE sku = :sku"
+                    ),
+                    [{"sku": row.sku}],
+                ).scalar_one()
+            )
 
         # print(inventory)
 
@@ -112,8 +232,6 @@ def get_bottle_plan():
         max_bottle_each = potions_left // len(result)
         threshold = potion_capacity // len(result)
         i = 0
-            
-        # need threshold logic soon (increase thresholds on potions that are selling, decrease on those that are not)
 
         for row in result:
             max_from_mls = max_quantity(mls, row.type)
@@ -122,9 +240,11 @@ def get_bottle_plan():
                 continue
 
             till_cap = threshold - inventory[i]
-            final_quantity = max_from_mls if max_from_mls <= max_bottle_each else max_bottle_each
+            final_quantity = (
+                max_from_mls if max_from_mls <= max_bottle_each else max_bottle_each
+            )
             final_quantity = final_quantity if final_quantity <= till_cap else till_cap
-            
+
             # if is_pure(row.type): # intention to split up bottling evenly between mixed and pure
             #     final_quantity //= 2
 
@@ -135,13 +255,7 @@ def get_bottle_plan():
 
         return plan
 
-        # current logic:
-        # bottle each type the max it can up to its potion capacity
-
-        # future logic:
-        # instead of going all in on one, i want to loop through every potion and increase its quantity by 1 until:
-        # no more potions can be bottled or
-        # capacity is reached for that individual potion or potions inventory
+        # potential idea to split up bottling more evenly? maybe do percentage based in is_popular or something
 
         # collect current mls, potions, and potion capacity from global inventory
         # while potions < potions_capacity and there is still ml available to bottle at least one of the potions in catalog
@@ -153,113 +267,6 @@ def get_bottle_plan():
         # subtract any ml bottled from the current amounts of ml
         # keep track of that potions capacity in relation to the threshold
         # keep track of the global inventory's potion capacity
-
-        # for row in result:
-        #     # print(row.inventory)
-        #     # print(mls)
-        #     # print(row)
-        #     if row.quantity >= threshold:
-        #         continue
-        #     else:
-        #         max = max_quantity(mls, row.type)
-        #         # print("max: " + str(max))
-        #         if max == 0:
-        #             continue
-
-        #         quantity = threshold - row.inventory
-        #         final_quantity = quantity if max >= quantity else max
-        #         cap_quantity = (
-        #             final_quantity
-        #             if (final_quantity + potions) <= potion_capacity
-        #             else (potion_capacity - potions)
-        #         )
-        #         potions += cap_quantity
-        #         mls = sub_ml(mls, row.type, cap_quantity)
-
-        #         plan.append({"potion_type": row.type, "quantity": cap_quantity})
-
-    # print("bottling plan: " + str(plan))
-
-def max_quantity(arr1, arr2):
-    result = []
-    for x, y in zip(arr1, arr2):
-        if y != 0:
-            result.append(x // y)
-        else:
-            result.append(float("inf"))
-
-    # print(result)
-    return min(result)
-
-def sub_ml(arr1, arr2, max):
-    result = []
-    for x, y in zip(arr1, arr2):
-        result.append(x - (max * y))
-    return result
-
-def is_pure(type):
-    res = 0
-    for i in range(len(type)):
-        if type[i] > 0:
-            res += 1
-
-    if res > 1:
-        return False
-    return True
-
-def get_day():
-    with db.engine.begin() as connection:
-        result = connection.execute(
-            sqlalchemy.text(
-                """
-                    SELECT day
-                    FROM timestamps
-                    ORDER BY id DESC
-                    LIMIT 1;
-                """
-                )
-            ).first()[0]
-        return result
-
-def which_potions():
-    # return a list of potions to pass to my result query
-    # goal is to bottle potions that i know will sell   
-
-    # if there are not 6 potion types with a quantity greater than 0
-        # just return those that do have quantity > 0 with a select
-    # elif there are more than 6 potion types with quantity greater than 0
-
-        # bottle based on what day it is (hardcode IN THE DB):
-            # if edgeday, bottle 
-            # if bloomday, bottle more red potions for fighters / rgb potions for monks
-            # if arcanaday, bottle 
-            # if hearthday, bottle
-            # if crownday, bottle 
-            # if blesseday, bottle
-            # if soulday, bottle green and blue potions / green and blue mixes
-
-        # more advanced bottling plan based on popularity:
-        # make a bottling plan that just selects random potion types to bottle (not dark if dont have any):
-            # run this bottling plan for a week and gather intel into a new table (referenced below)
-            # for each day, show what potions were bottled and what potions sold the most
-        # if it has been 7 days since the last reset, start bottling based on sells the most:
-            # make a new table that selects the most popular potions from each day
-            # table will have an entry for each day of the potions week, along with the top 4 selling potions
-            # leaving 2 for firesale spots
-
-    with db.engine.begin() as connection:
-        day = get_day()
-        pot_list = connection.execute(
-            sqlalchemy.text(
-                """
-                    SELECT pot_pref
-                    FROM preferences
-                    WHERE day = :day
-                """
-                ),[{"day": day}]
-            ).first()[0]
-
-    return tuple(pot_list)
 
 
 if __name__ == "__main__":

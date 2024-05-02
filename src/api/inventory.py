@@ -30,11 +30,11 @@ def get_inventory():
             )
         ).scalar_one()
 
-        print(ml)
-        print(gold)
+        print("ml: " + str(ml))
+        print("gold: " + str(gold))
+        print("potions: " + str(potions))
 
     return {"number_of_potions": potions, "ml_in_barrels": ml, "gold": gold}
-
 
 # Gets called once a day
 @router.post("/plan")
@@ -66,9 +66,16 @@ def get_capacity_plan():
         pot_cap = 0
         ml_cap = 0
 
-        if gold >= 3000:
-            pot_cap = 1 if potion_capacity - potions <= 15 else 0
-            ml_cap = 1 if ml_capacity - ml <= 2500 else 0
+        if gold >= 1500:
+            if (ml_capacity == 10000): # early ml increase so we can buy a large barrel
+                ml_cap = 1
+                pot_cap = 0
+            elif (potion_capacity == 50): # early pot cap increase
+                pot_cap = 1
+                ml_cap = 0
+            elif (gold >= (5000 * (ml_capacity // 10000))): # logic for every purchase after that
+                ml_cap = 1 if ml_capacity - ml <= 2500 else 0
+                pot_cap = 1 if potion_capacity - potions <= 15 else 0
 
     return {
         "potion_capacity": pot_cap,
