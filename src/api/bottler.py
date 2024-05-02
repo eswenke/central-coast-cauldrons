@@ -117,20 +117,20 @@ def is_popular():
     #   raise their threshold by 10 or so (increases with higher potion capacity and ml?)
     #   space will be cleared by firesale and hopefully the sale of other potions normally
 
-    with db.engine.begin() as connection:
-        result = connection.execute(
-            sqlalchemy.text(
-                """
-                    SELECT DISTINCT sku
-                    FROM potions_ledger
-                    WHERE timestamp <= (SELECT MAX(timestamp) - interval '12 hours' FROM potions_ledger), quantity > 0
-                    ORDER BY timestamp DESC
-                    LIMIT 3;
-                """
-            )
-        ).fetchall()
+    # with db.engine.begin() as connection:
+    #     result = connection.execute(
+    #         sqlalchemy.text(
+    #             """
+    #                 SELECT DISTINCT sku
+    #                 FROM potions_ledger
+    #                 WHERE timestamp <= (SELECT MAX(timestamp) - interval '12 hours' FROM potions_ledger), quantity > 0
+    #                 ORDER BY timestamp DESC
+    #                 LIMIT 3;
+    #             """
+    #         )
+    #     ).fetchall()
 
-        print(result)
+    #     print(result)
 
     return
 

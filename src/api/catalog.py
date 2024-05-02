@@ -13,7 +13,7 @@ def get_catalog():
 
     plan = []
     limit = 6
-    firesale()
+    # firesale()
 
     with db.engine.begin() as connection:
         # get the 6 most recent, unique potions sold
@@ -113,34 +113,34 @@ def get_day():
 
 
 def firesale():
-    # return a list of potions to change the price of to very cheap because they are not selling
-    # maybe pick a max of 2 potions every catalog that will have their prices lowered based on:
-        # grab the first 2 potion type that have not sold in over a day:
-            # and put their price to 10 (ONLY IN THE PLAN, NOT THE ACTUAL POTIONS TABLE)
-        # add those to the end of the catalog
+#     # return a list of potions to change the price of to very cheap because they are not selling
+#     # maybe pick a max of 2 potions every catalog that will have their prices lowered based on:
+#         # grab the first 2 potion type that have not sold in over a day:
+#             # and put their price to 10 (ONLY IN THE PLAN, NOT THE ACTUAL POTIONS TABLE)
+#         # add those to the end of the catalog
 
-    # for all the potion types in potions
-    # filter for all those that have a positive inventory
-    # filter for one row of the most recent negative quantity transaction for each potion type
-    # for any potion types that haven't sold in the last 12 hours since the most recent time, 
-    #   lower their price to 10 gold
-    #   (can add a time column to constant that updates to the most recent time when time is called in game, use that
-    #   for most recent time for all potions)
+#     # for all the potion types in potions
+#     # filter for all those that have a positive inventory
+#     # filter for one row of the most recent negative quantity transaction for each potion type
+#     # for any potion types that haven't sold in the last 12 hours since the most recent time, 
+#     #   lower their price to 10 gold
+#     #   (can add a time column to constant that updates to the most recent time when time is called in game, use that
+#     #   for most recent time for all potions)
 
 
-    with db.engine.begin() as connection:
-        result = connection.execute(
-            sqlalchemy.text(
-                """
-                    SELECT DISTINCT sku
-                    FROM potions_ledger
-                    WHERE timestamp <= (SELECT MAX(timestamp) - interval '12 hours' FROM potions_ledger), quantity > 0
-                    ORDER BY timestamp DESC
-                    LIMIT 3;
-                """
-                )
-            ).fetchall()
+#     with db.engine.begin() as connection:
+#         result = connection.execute(
+#             sqlalchemy.text(
+#                 """
+#                     SELECT DISTINCT sku
+#                     FROM potions_ledger
+#                     WHERE timestamp <= (SELECT MAX(timestamp) - interval '12 hours' FROM potions_ledger), quantity > 0
+#                     ORDER BY timestamp DESC
+#                     LIMIT 3;
+#                 """
+#                 )
+#             ).fetchall()
         
-        print(result)
+#         print(result)
 
     return
