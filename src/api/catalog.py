@@ -32,87 +32,89 @@ def get_catalog():
     # firesale()
 
     with db.engine.begin() as connection:
-        result = connection.execute(
-            sqlalchemy.text(
-                "SELECT sku, type, price FROM potions WHERE sku in :pot_list"
-            ),
-            [{"pot_list": pot_list}],
-        ).fetchall()
-
-        # # get the 6 most recent, unique potions sold
         # result = connection.execute(
         #     sqlalchemy.text(
-        #         """
-        #         SELECT DISTINCT sku
-        #         FROM (
-        #             SELECT *
-        #             FROM potions_ledger
-        #             WHERE quantity < 0
-        #             ORDER BY timestamp DESC
-        #         ) as skus
-        #         LIMIT 3
-        #         """
-        #     )
-        # ).fetchall()
-
-        # limit -= len(result)
-        # added_result = connection.execute(
-        #     sqlalchemy.text(
-        #         """
-        #     SELECT DISTINCT sku
-        #     FROM (
-        #         SELECT *
-        #         FROM potions_ledger
-        #         ORDER BY timestamp DESC
-        #     ) as skus
-        #     LIMIT :limit
-        #     """
+        #         "SELECT sku, type, price FROM potions WHERE sku in :pot_list"
         #     ),
-        #     [{"limit": limit}],
+        #     [{"pot_list": pot_list}],
         # ).fetchall()
 
-        # for i in range(len(added_result)):
-        #     if added_result[i] not in result:
-        #         result.append(added_result[i])
-            
-
-    for row in result:
-        # get inventory
-        inventory = connection.execute(
+        # get the 6 most recent, unique potions sold
+        result = connection.execute(
             sqlalchemy.text(
                 """
-                SELECT SUM(potions_ledger.quantity)
+                SELECT DISTINCT sku
+                FROM (
+                    SELECT *
+                    FROM potions_ledger
+                    WHERE quantity < 0
+                    ORDER BY timestamp DESC
+                ) as skus
+                LIMIT 3
+                """
+            )
+        ).fetchall()
+
+        res_tuple = tuple([row.sku for row in result])
+        print(res_tuple)
+
+        limit -= len(result)
+        added_result = connection.execute(
+            sqlalchemy.text(
+                """
+            SELECT DISTINCT sku
+            FROM (
+                SELECT *
                 FROM potions_ledger
-                WHERE potions_ledger.sku = :sku
-                """
+                WHERE sku NOT IN :recents AND quantity > 0
+                ORDER BY timestamp DESC
+            ) as skus
+            LIMIT :limit
+            """
             ),
-            [{"sku": row.sku}],
-        ).scalar_one()
+            [{"recents" : res_tuple, "limit": limit}],
+        ).fetchall()
 
-        if inventory is None or inventory <= 0:
-            continue
+        for i in range(len(added_result)):
+                result.append(added_result[i])
+            
+        for row in result:
+            # get inventory
+            inventory = connection.execute(
+                sqlalchemy.text(
+                    """
+                    SELECT SUM(potions_ledger.quantity)
+                    FROM potions_ledger
+                    WHERE potions_ledger.sku = :sku
+                    """
+                ),
+                [{"sku": row.sku}],
+            ).scalar_one()
 
-        # get price and sku
-        price_and_sku = connection.execute(
-            sqlalchemy.text(
-                """
-                SELECT price, type
-                FROM potions
-                WHERE potions.sku = :sku
-                """
-            ),
-            [{"sku": row.sku}],
-        ).first()
-        price, type = price_and_sku
+            if inventory is None or inventory <= 0:
+                continue
 
-        plan.append(
-            {
-                "sku": row.sku,
-                "quantity": inventory,
-                "price": price,
-                "potion_type": type,
-            }
-        )
+            # get price and sku
+            price_and_sku = connection.execute(
+                sqlalchemy.text(
+                    """
+                    SELECT price, type
+                    FROM potions
+                    WHERE potions.sku = :sku
+                    """
+                ),
+                [{"sku": row.sku}],
+            ).first()
+            price, type = price_and_sku
+
+            plan.append(
+                {
+                    "sku": row.sku,
+                    "quantity": inventory,
+                    "price": price,
+                    "potion_type": type,
+                }
+            )
 
     print("catalog: ")
     print(plan)
