@@ -116,6 +116,8 @@ def get_catalog():
                 }
             )
 
+    print("catalog: ")
+    print(plan)
     return plan
 
 
