@@ -32,51 +32,51 @@ def get_catalog():
     # firesale()
 
     with db.engine.begin() as connection:
-        # result = connection.execute(
-        #     sqlalchemy.text(
-        #         "SELECT sku, type, price FROM potions WHERE sku in :pot_list"
-        #     ),
-        #     [{"pot_list": pot_list}],
-        # ).fetchall()
-
-        # get the 6 most recent, unique potions sold
         result = connection.execute(
             sqlalchemy.text(
-                """
-                SELECT DISTINCT sku
-                FROM (
-                    SELECT *
-                    FROM potions_ledger
-                    WHERE quantity < 0
-                    ORDER BY timestamp DESC
-                ) as skus
-                LIMIT 3
-                """
-            )
-        ).fetchall()
-
-        res_tuple = tuple([row.sku for row in result])
-        print(res_tuple)
-
-        limit -= len(result)
-        added_result = connection.execute(
-            sqlalchemy.text(
-                """
-            SELECT DISTINCT sku
-            FROM (
-                SELECT *
-                FROM potions_ledger
-                WHERE sku NOT IN :recents AND quantity > 0
-                ORDER BY timestamp DESC
-            ) as skus
-            LIMIT :limit
-            """
+                "SELECT sku, type, price FROM potions WHERE sku in :pot_list"
             ),
-            [{"recents" : res_tuple, "limit": limit}],
+            [{"pot_list": pot_list}],
         ).fetchall()
 
-        for i in range(len(added_result)):
-                result.append(added_result[i])
+        # # get the 6 most recent, unique potions sold
+        # result = connection.execute(
+        #     sqlalchemy.text(
+        #         """
+        #         SELECT DISTINCT sku
+        #         FROM (
+        #             SELECT *
+        #             FROM potions_ledger
+        #             WHERE quantity < 0
+        #             ORDER BY timestamp DESC
+        #         ) as skus
+        #         LIMIT 3
+        #         """
+        #     )
+        # ).fetchall()
+
+        # res_tuple = tuple([row.sku for row in result])
+        # print(res_tuple)
+
+        # limit -= len(result)
+        # added_result = connection.execute(
+        #     sqlalchemy.text(
+        #         """
+        #     SELECT DISTINCT sku
+        #     FROM (
+        #         SELECT *
+        #         FROM potions_ledger
+        #         WHERE sku NOT IN :recents AND quantity > 0
+        #         ORDER BY timestamp DESC
+        #     ) as skus
+        #     LIMIT :limit
+        #     """
+        #     ),
+        #     [{"recents" : res_tuple, "limit": limit}],
+        # ).fetchall()
+
+        # for i in range(len(added_result)):
+        #         result.append(added_result[i])
             
         for row in result:
             # get inventory
