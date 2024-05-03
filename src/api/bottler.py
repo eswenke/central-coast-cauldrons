@@ -229,6 +229,7 @@ def get_bottle_plan():
         mls = [red_ml, green_ml, blue_ml, dark_ml]
         potions_left = potion_capacity - potions
         max_bottle_each = potions_left // len(result)
+
         if (potions_left < len(result)):
             max_bottle_each = potions_left
 
@@ -253,6 +254,7 @@ def get_bottle_plan():
             plan.append({"potion_type": row.type, "quantity": final_quantity})
             i += 1
 
+        print(plan)
         return plan
 
 if __name__ == "__main__":
