@@ -40,7 +40,7 @@ def get_catalog():
         # if no firesaled potions:
         #       grab the most recently bottled potions (that are not already in the results, 6 - len(result) for number)
         #       already have the sql to do this
-        
+
         result = connection.execute(
             sqlalchemy.text(
                 "SELECT sku, type, price FROM potions WHERE sku in :pot_list"
@@ -152,6 +152,8 @@ def firesale():
 #         # grab the first 2 potion type that have not sold in over a day:
 #             # and put their price to 10 (ONLY IN THE PLAN, NOT THE ACTUAL POTIONS TABLE)
 #         # add those to the end of the catalog
+
+#     # we could also just take the previous day's catalog and firesale whatever potions are not 
 
 #     # for all the potion types in potions
 #     # filter for all those that have a positive inventory

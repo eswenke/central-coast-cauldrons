@@ -71,15 +71,6 @@ def which_potions():
     # just return those that do have quantity > 0 with a select
     # elif there are more than 6 potion types with quantity greater than 0
 
-    # bottle based on what day it is (hardcode IN THE DB):
-    # if edgeday, bottle
-    # if bloomday, bottle more red potions for fighters / rgb potions for monks
-    # if arcanaday, bottle
-    # if hearthday, bottle
-    # if crownday, bottle
-    # if blesseday, bottle
-    # if soulday, bottle green and blue potions / green and blue mixes
-
     # more advanced bottling plan based on popularity:
     # make a bottling plan that just selects random potion types to bottle (not dark if dont have any):
     # run this bottling plan for a week and gather intel into a new table (referenced below)
@@ -173,8 +164,6 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
             for i in range(4):
                 mls[i] += potion_type[i] * potion.quantity
 
-            # build up a dictionary of what i want to insert, then isnert later
-
             connection.execute(
                 sqlalchemy.text(
                     """INSERT INTO potions_ledger (quantity, sku) 
@@ -226,7 +215,6 @@ def get_bottle_plan():
         ).scalar_one()
 
         inventory = []
-        # this can be changed to be similar to picture
         for row in result:
             inventory.append(
                 connection.execute(
@@ -236,8 +224,6 @@ def get_bottle_plan():
                     [{"sku": row.sku}],
                 ).scalar_one()
             )
-
-        # print(inventory)
 
         red_ml, green_ml, blue_ml, dark_ml = mls
         mls = [red_ml, green_ml, blue_ml, dark_ml]
@@ -261,9 +247,6 @@ def get_bottle_plan():
             )
             final_quantity = final_quantity if final_quantity <= till_cap else till_cap
 
-            # if is_pure(row.type): # intention to split up bottling evenly between mixed and pure
-            #     final_quantity //= 2
-
             mls = sub_ml(mls, row.type, final_quantity)
             potions_left -= final_quantity
 
@@ -271,20 +254,6 @@ def get_bottle_plan():
             i += 1
 
         return plan
-
-        # potential idea to split up bottling more evenly? maybe do percentage based in is_popular or something
-
-        # collect current mls, potions, and potion capacity from global inventory
-        # while potions < potions_capacity and there is still ml available to bottle at least one of the potions in catalog
-        # for loop like the one i currently have
-        # every iteration adds 1 to that potion if it is possible to be bottled
-        # if that potion type is already in the potions list, just increment the quantity by one if possible
-        # if that potion type is not already in the list and can be bottled, add to the list with 1 quantity
-        # if not possible, continue to next in the for loop
-        # subtract any ml bottled from the current amounts of ml
-        # keep track of that potions capacity in relation to the threshold
-        # keep track of the global inventory's potion capacity
-
 
 if __name__ == "__main__":
     print(get_bottle_plan())

@@ -107,7 +107,7 @@ def create_wpp(
                 # print("q_buy: " + str(q_buyable))
                 # print("q_final: " + str(q_final))
 
-                if q_max < 0:
+                if q_max <= 0:
                     return None
                 else:
                     return {
