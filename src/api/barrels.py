@@ -251,4 +251,6 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                         gold -= price * barrel_purchase["quantity"]
                     current_ml += ml_per_barrel * barrel_purchase["quantity"]
 
+    print("barreling plan:")
+    print(plan)
     return plan

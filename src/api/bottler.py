@@ -254,6 +254,7 @@ def get_bottle_plan():
             plan.append({"potion_type": row.type, "quantity": final_quantity})
             i += 1
 
+        print("bottling plan:")
         print(plan)
         return plan
 
