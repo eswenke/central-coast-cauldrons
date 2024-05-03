@@ -32,6 +32,15 @@ def get_catalog():
     # firesale()
 
     with db.engine.begin() as connection:
+        # LIMIT TO 4 on day of comp, then the last 2 either firesale or recently bottled
+        # potions that need to be firesaled:
+        #       any potion that has not sold in 3 ticks but has more than 0 inventory, limit 2
+        #       set price from 10 - 20 gold at random
+        #       return those potion skus and prices, add them to the main catalog
+        # if no firesaled potions:
+        #       grab the most recently bottled potions (that are not already in the results, 6 - len(result) for number)
+        #       already have the sql to do this
+        
         result = connection.execute(
             sqlalchemy.text(
                 "SELECT sku, type, price FROM potions WHERE sku in :pot_list"

@@ -243,12 +243,15 @@ def get_bottle_plan():
         mls = [red_ml, green_ml, blue_ml, dark_ml]
         potions_left = potion_capacity - potions
         max_bottle_each = potions_left // len(result)
+        if (potions_left < len(result)):
+            max_bottle_each = potions_left
+
         threshold = potion_capacity // len(result)
         i = 0
 
         for row in result:
             max_from_mls = max_quantity(mls, row.type)
-            if max_from_mls == 0 or inventory[i] >= threshold:
+            if max_from_mls == 0 or inventory[i] >= threshold or potions_left == 0:
                 i += 1
                 continue
 
@@ -262,6 +265,7 @@ def get_bottle_plan():
             #     final_quantity //= 2
 
             mls = sub_ml(mls, row.type, final_quantity)
+            potions_left -= final_quantity
 
             plan.append({"potion_type": row.type, "quantity": final_quantity})
             i += 1
