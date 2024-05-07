@@ -41,51 +41,44 @@ def get_catalog():
         #       grab the most recently bottled potions (that are not already in the results, 6 - len(result) for number)
         #       already have the sql to do this
 
+        # get the 6 most recent, unique potions sold
         result = connection.execute(
             sqlalchemy.text(
-                "SELECT sku, type, price FROM potions WHERE sku in :pot_list"
-            ),
-            [{"pot_list": pot_list}],
+                """
+                SELECT DISTINCT sku
+                FROM (
+                    SELECT sku
+                    FROM potions_ledger
+                    WHERE quantity < 0
+                    ORDER BY timestamp DESC
+                    LIMIT 3
+                ) AS recent_sold;
+                """
+            )
         ).fetchall()
 
-        # # get the 6 most recent, unique potions sold
-        # result = connection.execute(
-        #     sqlalchemy.text(
-        #         """
-        #         SELECT DISTINCT sku
-        #         FROM (
-        #             SELECT *
-        #             FROM potions_ledger
-        #             WHERE quantity < 0
-        #             ORDER BY timestamp DESC
-        #         ) as skus
-        #         LIMIT 3
-        #         """
-        #     )
-        # ).fetchall()
+        res_tuple = tuple([row.sku for row in result])
+        print(res_tuple)
 
-        # res_tuple = tuple([row.sku for row in result])
-        # print(res_tuple)
+        limit -= len(result)
+        added_result = connection.execute(
+            sqlalchemy.text(
+                """
+            SELECT DISTINCT sku
+            FROM (
+                SELECT *
+                FROM potions_ledger
+                WHERE sku NOT IN :recents AND quantity > 0
+                ORDER BY timestamp DESC
+                LIMIT :limit
+            ) as skus
+            """
+            ),
+            [{"recents" : res_tuple, "limit": limit}],
+        ).fetchall()
 
-        # limit -= len(result)
-        # added_result = connection.execute(
-        #     sqlalchemy.text(
-        #         """
-        #     SELECT DISTINCT sku
-        #     FROM (
-        #         SELECT *
-        #         FROM potions_ledger
-        #         WHERE sku NOT IN :recents AND quantity > 0
-        #         ORDER BY timestamp DESC
-        #     ) as skus
-        #     LIMIT :limit
-        #     """
-        #     ),
-        #     [{"recents" : res_tuple, "limit": limit}],
-        # ).fetchall()
-
-        # for i in range(len(added_result)):
-        #         result.append(added_result[i])
+        for i in range(len(added_result)):
+                result.append(added_result[i])
             
         for row in result:
             # get inventory
@@ -162,6 +155,9 @@ def firesale():
 #     #   lower their price to 10 gold
 #     #   (can add a time column to constant that updates to the most recent time when time is called in game, use that
 #     #   for most recent time for all potions)
+
+#     # firesale on the 6th tick of each in game day, do not do normal catalog
+#     # otherwise, do 3 recently sold, 3 recently bottled
 
 
 #     with db.engine.begin() as connection:

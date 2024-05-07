@@ -62,21 +62,48 @@ def search_orders(
     time is 5 total line items.
     """
 
-    # with db.engine.begin() as connection:
-    #     result = connection.execute(sqlalchemy.text("SELECT num_green_potions FROM global_inventory")).scalar_one()
+    ### test, then write checkout logic
+    ### then fix catalog (limits 3 but not disinct)
+
+    search_page = 0 if search_page == "" else search_page
+    prev = "" if int(search_page) - 5 < 0 else int(search_page) - 5
+    next = ""
+    results = []
+
+    with db.engine.begin() as connection:
+        result = connection.execute(
+            sqlalchemy.text(
+                f"""
+                    SELECT id, item_sku, customer_name, line_item_total, timestamp, potion_sku FROM orders
+                    WHERE 1=1
+                    {("" if potion_sku == "" else "AND potion_sku ILIKE '%" + potion_sku + "%'")}
+                    {("" if customer_name == "" else "AND customer_name ILIKE '%" + customer_name + "%'")}
+                    ORDER BY {sort_col} {sort_order}
+                    LIMIT 6
+                    OFFSET :page
+                """
+            ), [{"page": search_page}]
+        )
+
+        for i, row in enumerate(result):
+            if i == 5:
+                next = int(search_page + 5)
+                break   
+
+            results.append(
+                {
+                    "line_item_id": row.id,
+                    "item_sku": row.item_sku,
+                    "customer_name": row.customer_name,
+                    "line_item_total": row.line_item_total,
+                    "timestamp": row.timestamp,
+                }
+            ) 
 
     return {
-        "previous": "",
-        "next": "",
-        "results": [
-            {
-                "line_item_id": 1,
-                "item_sku": "1 oblivion potion",
-                "customer_name": "Scaramouche",
-                "line_item_total": 50,
-                "timestamp": "2021-01-01T00:00:00Z",
-            }
-        ],
+        "previous": prev,
+        "next": next,
+        "results": results
     }
 
 
@@ -109,7 +136,8 @@ def post_visits(visit_id: int, customers: list[Customer]):
                 """
                 UPDATE timestamps SET visits = :visits WHERE id = :id
                 """
-            ),[{"visits": visits, "id": id}]
+            ),
+            [{"visits": visits, "id": id}],
         )
 
     return "OK"
@@ -167,6 +195,8 @@ class CartCheckout(BaseModel):
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
 
+    set_order(cart_id)
+
     with db.engine.begin() as connection:
         connection.execute(
             sqlalchemy.text(
@@ -202,6 +232,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
 
     return {"total_potions_bought": sum_potions, "total_gold_paid": sum_gold}
 
+
 def get_recent_id():
     with db.engine.begin() as connection:
         result = connection.execute(
@@ -212,7 +243,45 @@ def get_recent_id():
                     ORDER BY id DESC
                     LIMIT 1;
                 """
-                )
-            ).first()[0]
+            )
+        ).first()[0]
 
     return result
+
+
+def set_order(cart_id):
+    # get the customer name from the cart_id
+    # for order row, we need:
+    #       id : automatically generated
+    #       item_sku: quantity + potion_sku
+    #       customer_name
+    #       line_item_total : total price (quantity * price)
+    #       timestamp : default (now)
+    #       potion_sku : just the potion sku
+    # we get each of these by:
+    #       id : passed into the function
+    #       item_sku : append quantity to potion_sku
+    #       customer_name: acquired from carts with cart_id
+    #       line_item_total : price acquired from potions, quantity acquired from potions_ledger
+    #       timestamp : default (now)
+    #       potion_sku : acquired from potions_ledger
+
+    customer_name = ""
+    potion_sku = ""
+    quantity = 0
+    price = 0
+    item_sku = ""
+
+    with db.engine.begin() as connection:
+        result = connection.execute(
+            sqlalchemy.text(
+                """
+                    SELECT id
+                    FROM timestamps
+                    ORDER BY id DESC
+                    LIMIT 1;
+                """
+            )
+        )
+
+    return
