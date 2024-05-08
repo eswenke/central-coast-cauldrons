@@ -67,12 +67,6 @@ def search_orders(
     next = ""
     results = []
 
-    potion_sku = "%" + potion_sku
-    customer_name = "%" + customer_name
-
-    print(potion_sku)
-    print(customer_name)
-
     with db.engine.begin() as connection:
         result = connection.execute(
             sqlalchemy.text(
@@ -85,7 +79,7 @@ def search_orders(
                     LIMIT 6
                     OFFSET :page
                 """
-            ), [{"potion_sku": potion_sku, "customer_name": customer_name, "page": search_page}]
+            ), [{"potion_sku": "%" + potion_sku + "%", "customer_name": "%" + customer_name + "%", "page": "%" + search_page + "%"}]
         )
 
         for i, row in enumerate(result):
