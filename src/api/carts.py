@@ -100,8 +100,8 @@ def search_orders(
             ) 
 
     return {
-        "previous": prev,
-        "next": next,
+        "previous": str(prev),
+        "next": str(next),
         "results": results
     }
 
