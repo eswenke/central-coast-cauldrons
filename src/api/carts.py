@@ -67,9 +67,6 @@ def search_orders(
     next = ""
     results = []
 
-    print(potion_sku)
-    print(customer_name)
-
     with db.engine.begin() as connection:
         result = connection.execute(
             sqlalchemy.text(
