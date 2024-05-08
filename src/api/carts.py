@@ -67,19 +67,21 @@ def search_orders(
     next = ""
     results = []
 
+    print(prev)
+
     with db.engine.begin() as connection:
         result = connection.execute(
             sqlalchemy.text(
                 f"""
                     SELECT id, item_sku, customer_name, line_item_total, timestamp, potion_sku FROM orders
                     WHERE 1=1
-                    {("" if potion_sku == "" else "AND potion_sku ILIKE '%" + potion_sku + "%'")}
-                    {("" if customer_name == "" else "AND customer_name ILIKE '%" + customer_name + "%'")}
+                    {("" if potion_sku == "" else "AND potion_sku ILIKE '%:potion_sku%'")}
+                    {("" if customer_name == "" else "AND customer_name ILIKE '%:customer_name%'")}
                     ORDER BY {sort_col.name} {sort_order.name}
                     LIMIT 6
                     OFFSET :page
                 """
-            ), [{"page": search_page}]
+            ), [{"potion_sku": potion_sku, "customer_name": customer_name, "page": search_page}]
         )
 
         for i, row in enumerate(result):

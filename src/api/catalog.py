@@ -21,26 +21,18 @@ def which_potions():
 
     return tuple(pot_list)
 
+
 @router.get("/catalog/", tags=["catalog"])
 def get_catalog():
     """
     Each unique item combination must have only a single price.
     """
-    pot_list = which_potions()
+    # pot_list = which_potions()
     plan = []
     limit = 6
     # firesale()
 
     with db.engine.begin() as connection:
-        # LIMIT TO 4 on day of comp, then the last 2 either firesale or recently bottled
-        # potions that need to be firesaled:
-        #       any potion that has not sold in 3 ticks but has more than 0 inventory, limit 2
-        #       set price from 10 - 20 gold at random
-        #       return those potion skus and prices, add them to the main catalog
-        # if no firesaled potions:
-        #       grab the most recently bottled potions (that are not already in the results, 6 - len(result) for number)
-        #       already have the sql to do this
-
         # get the 6 most recent, unique potions sold
         result = connection.execute(
             sqlalchemy.text(
@@ -74,12 +66,12 @@ def get_catalog():
             ) as skus
             """
             ),
-            [{"recents" : res_tuple, "limit": limit}],
+            [{"recents": res_tuple, "limit": limit}],
         ).fetchall()
 
         for i in range(len(added_result)):
-                result.append(added_result[i])
-            
+            result.append(added_result[i])
+
         for row in result:
             # get inventory
             inventory = connection.execute(
@@ -133,46 +125,35 @@ def get_day():
                     ORDER BY id DESC
                     LIMIT 1;
                 """
-                )
-            ).first()[0]
+            )
+        ).first()[0]
 
         return result
 
 
 def firesale():
-#     # return a list of potions to change the price of to very cheap because they are not selling
-#     # maybe pick a max of 2 potions every catalog that will have their prices lowered based on:
-#         # grab the first 2 potion type that have not sold in over a day:
-#             # and put their price to 10 (ONLY IN THE PLAN, NOT THE ACTUAL POTIONS TABLE)
-#         # add those to the end of the catalog
+    #   below is SQL to get the first two potion skus that have not sold in the last 12 hours (needs testing)
+    #   add two potions to firesale at a max
+    #   check for potions that have not sold in the last 3-4 ticks (6-8 hours) that also have positive inventories > 0
+    #   NEED TO IMPLEMENT VERSIONING FOR THIS.
+    #       could add another row to each potion type that signifies a cheaper version (add a column to signal firesale price)
+    #       could add a catalog table that sets prices for that tick (since catalog is called first), reference when needed
+    #   potential to sell a lot of points that are bottled even if they are about to be purchased in the next tick/day
+    #   could make this a more manual option and only firesale certain potions that i pick via the database, use a flag
 
-#     # we could also just take the previous day's catalog and firesale whatever potions are not 
+    #     with db.engine.begin() as connection:
+    #         result = connection.execute(
+    #             sqlalchemy.text(
+    #                 """
+    #                     SELECT DISTINCT sku
+    #                     FROM potions_ledger
+    #                     WHERE timestamp <= (SELECT MAX(timestamp) - interval '12 hours' FROM potions_ledger), quantity > 0
+    #                     ORDER BY timestamp DESC
+    #                     LIMIT 2;
+    #                 """
+    #                 )
+    #             ).fetchall()
 
-#     # for all the potion types in potions
-#     # filter for all those that have a positive inventory
-#     # filter for one row of the most recent negative quantity transaction for each potion type
-#     # for any potion types that haven't sold in the last 12 hours since the most recent time, 
-#     #   lower their price to 10 gold
-#     #   (can add a time column to constant that updates to the most recent time when time is called in game, use that
-#     #   for most recent time for all potions)
-
-#     # firesale on the 6th tick of each in game day, do not do normal catalog
-#     # otherwise, do 3 recently sold, 3 recently bottled
-
-
-#     with db.engine.begin() as connection:
-#         result = connection.execute(
-#             sqlalchemy.text(
-#                 """
-#                     SELECT DISTINCT sku
-#                     FROM potions_ledger
-#                     WHERE timestamp <= (SELECT MAX(timestamp) - interval '12 hours' FROM potions_ledger), quantity > 0
-#                     ORDER BY timestamp DESC
-#                     LIMIT 3;
-#                 """
-#                 )
-#             ).fetchall()
-        
-#         print(result)
+    #         print(result)
 
     return
