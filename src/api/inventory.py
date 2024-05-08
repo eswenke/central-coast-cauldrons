@@ -67,12 +67,12 @@ def get_capacity_plan():
         ml_cap = 0
 
         if gold >= 1500:
-            if (ml_capacity == 10000): # early ml increase so we can buy a large barrel
-                ml_cap = 1
-                pot_cap = 0
-            elif (potion_capacity == 50): # early pot cap increase
+            if (potion_capacity == 50): # early pot cap increase
                 pot_cap = 1
                 ml_cap = 0
+            elif (ml_capacity == 10000): # early ml increase so we can buy a large barrel
+                ml_cap = 1
+                pot_cap = 0
             elif (gold >= (5000 * (ml_capacity // 10000))): # logic for every purchase after that
                 ml_cap = 1 if ml_capacity - ml <= 2500 else 0
                 pot_cap = 1 if potion_capacity - potions <= 15 else 0
