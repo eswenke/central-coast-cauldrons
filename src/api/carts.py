@@ -79,7 +79,7 @@ def search_orders(
                     LIMIT 6
                     OFFSET :page
                 """
-            ), [{"potion_sku": "%" + potion_sku + "%", "customer_name": "%" + customer_name + "%", "page": "%" + search_page + "%"}]
+            ), [{"potion_sku": "%" + potion_sku + "%", "customer_name": "%" + customer_name + "%", "page": int(search_page)}]
         )
 
         for i, row in enumerate(result):
