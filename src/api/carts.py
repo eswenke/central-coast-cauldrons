@@ -62,13 +62,13 @@ def search_orders(
     time is 5 total line items.
     """
 
-    ### test, then write checkout logic
-    ### then fix catalog (limits 3 but not disinct)
-
     search_page = 0 if search_page == "" else search_page
     prev = "" if int(search_page) - 5 < 0 else int(search_page) - 5
     next = ""
     results = []
+
+    print(potion_sku)
+    print(customer_name)
 
     with db.engine.begin() as connection:
         result = connection.execute(
@@ -78,7 +78,7 @@ def search_orders(
                     WHERE 1=1
                     {("" if potion_sku == "" else "AND potion_sku ILIKE '%" + potion_sku + "%'")}
                     {("" if customer_name == "" else "AND customer_name ILIKE '%" + customer_name + "%'")}
-                    ORDER BY {sort_col} {sort_order}
+                    ORDER BY {sort_col.name} {sort_order.name}
                     LIMIT 6
                     OFFSET :page
                 """
@@ -87,8 +87,8 @@ def search_orders(
 
         for i, row in enumerate(result):
             if i == 5:
-                next = int(search_page + 5)
-                break   
+                next = int(search_page) + 5
+                break  
 
             results.append(
                 {
@@ -259,29 +259,50 @@ def set_order(cart_id):
     #       timestamp : default (now)
     #       potion_sku : just the potion sku
     # we get each of these by:
-    #       id : passed into the function
+    #       id : automatic
     #       item_sku : append quantity to potion_sku
     #       customer_name: acquired from carts with cart_id
     #       line_item_total : price acquired from potions, quantity acquired from potions_ledger
     #       timestamp : default (now)
     #       potion_sku : acquired from potions_ledger
 
-    customer_name = ""
-    potion_sku = ""
-    quantity = 0
-    price = 0
-    item_sku = ""
-
     with db.engine.begin() as connection:
-        result = connection.execute(
+        customer_name = connection.execute(
             sqlalchemy.text(
                 """
-                    SELECT id
-                    FROM timestamps
-                    ORDER BY id DESC
-                    LIMIT 1;
+                    SELECT customer FROM carts WHERE id = :cart_id
                 """
-            )
+            ), [{"cart_id": cart_id}]
+        ).first()[0]
+
+        potion_sku, quantity = connection.execute(
+            sqlalchemy.text(
+                """
+                    SELECT potion, quantity FROM cart_items WHERE cart = :cart_id
+                """
+            ), [{"cart_id": cart_id}]
+        ).first()
+
+        item_sku = str(quantity) + " " + str(potion_sku)
+
+        price = connection.execute(
+            sqlalchemy.text(
+                """
+                    SELECT price FROM potions WHERE sku = :potion_sku
+                """
+            ), [{"potion_sku": potion_sku}]
+        ).scalar_one()
+
+        line_item_total = price * quantity
+
+        connection.execute(
+            sqlalchemy.text(
+                """
+                    INSERT INTO orders (item_sku, customer_name, line_item_total, potion_sku)
+                    VALUES (:item_sku, :customer_name, :line_item_total, :potion_sku)
+                """
+            ), [{"item_sku": item_sku, "customer_name": customer_name, "line_item_total": line_item_total, "potion_sku": potion_sku}]
         )
 
     return
+
