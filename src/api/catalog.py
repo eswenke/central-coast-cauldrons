@@ -37,14 +37,12 @@ def get_catalog():
         result = connection.execute(
             sqlalchemy.text(
                 """
-                SELECT DISTINCT sku
-                FROM (
-                    SELECT sku
+                    SELECT sku, MAX(timestamp) as latest
                     FROM potions_ledger
                     WHERE quantity < 0
-                    ORDER BY timestamp DESC
+                    GROUP BY sku
+                    ORDER BY latest DESC
                     LIMIT 3
-                ) AS recent_sold;
                 """
             )
         ).fetchall()
@@ -56,15 +54,13 @@ def get_catalog():
         added_result = connection.execute(
             sqlalchemy.text(
                 """
-            SELECT DISTINCT sku
-            FROM (
-                SELECT *
-                FROM potions_ledger
-                WHERE sku NOT IN :recents AND quantity > 0
-                ORDER BY timestamp DESC
-                LIMIT :limit
-            ) as skus
-            """
+                    SELECT sku, MAX(timestamp) as latest
+                    FROM potions_ledger
+                    WHERE sku NOT IN :recents AND quantity > 0
+                    GROUP BY sku
+                    ORDER BY latest DESC
+                    LIMIT :limit
+                """
             ),
             [{"recents": res_tuple, "limit": limit}],
         ).fetchall()
