@@ -230,11 +230,19 @@ def get_bottle_plan():
         max_bottle_each = potions_left // len(result)
         pre_threshold = potion_capacity // len(result)
 
+        print(result)
+        print(inventory)
+        print(pre_threshold)
+
         for i, row in enumerate(result):
             if inventory[i] >= pre_threshold:
                 del result[i]
 
         post_threshold = potion_capacity // len(result)
+
+        print(result)
+        print(inventory)
+        print(post_threshold)
 
         if potions_left < len(result):
             max_bottle_each = potions_left

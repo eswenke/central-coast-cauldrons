@@ -141,6 +141,10 @@ def firesale():
     #   potential to sell a lot of points that are bottled even if they are about to be purchased in the next tick/day
     #   could make this a more manual option and only firesale certain potions that i pick via the database, use a flag
 
+    #   could also change this to give a chance to potions that haven't sold in a while to see if any of them sell.
+    #   if not, set a flag that says as much and then firesale them with the next tick or so.
+    #   or just try and sell the potions every 6-12 ticks
+
     #     with db.engine.begin() as connection:
     #         result = connection.execute(
     #             sqlalchemy.text(
