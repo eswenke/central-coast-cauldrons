@@ -92,7 +92,6 @@ def which_potions():
     # if we need to base this on what mls we have, we could maybe do:
     # HERE type[1] < 60 AND type[2] < 60 AND type[3] < 1 AND type[4] < 1, where the number after < is :ml[1] or 2,3,4
 
-
     with db.engine.begin() as connection:
         day = get_day()
         pot_list = connection.execute(
@@ -229,20 +228,25 @@ def get_bottle_plan():
         mls = [red_ml, green_ml, blue_ml, dark_ml]
         potions_left = potion_capacity - potions
         max_bottle_each = potions_left // len(result)
+        pre_threshold = potion_capacity // len(result)
 
-        if (potions_left < len(result)):
+        for i, row in enumerate(result):
+            if inventory[i] >= pre_threshold:
+                del result[i]
+
+        post_threshold = potion_capacity // len(result)
+
+        if potions_left < len(result):
             max_bottle_each = potions_left
 
-        threshold = potion_capacity // len(result)
         i = 0
-
         for row in result:
             max_from_mls = max_quantity(mls, row.type)
-            if max_from_mls == 0 or inventory[i] >= threshold or potions_left == 0:
+            if max_from_mls == 0 or inventory[i] >= post_threshold or potions_left == 0:
                 i += 1
                 continue
 
-            till_cap = threshold - inventory[i]
+            till_cap = post_threshold - inventory[i]
             final_quantity = (
                 max_from_mls if max_from_mls <= max_bottle_each else max_bottle_each
             )
@@ -257,6 +261,7 @@ def get_bottle_plan():
         print("bottling plan:")
         print(plan)
         return plan
+
 
 if __name__ == "__main__":
     print(get_bottle_plan())
