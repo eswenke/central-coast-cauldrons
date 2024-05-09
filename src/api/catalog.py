@@ -55,7 +55,7 @@ def get_catalog():
                 """
                     SELECT sku, MAX(timestamp) as latest
                     FROM potions_ledger
-                    WHERE sku NOT IN :recents AND quantity >= 0
+                    WHERE sku NOT IN :recents AND quantity > 0
                     GROUP BY sku
                     ORDER BY latest DESC
                     LIMIT :limit
