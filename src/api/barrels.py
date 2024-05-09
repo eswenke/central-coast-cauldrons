@@ -108,7 +108,7 @@ def create_wpp(
                 # print("q_final: " + str(q_final))
 
                 if q_max <= 0:
-                    return None
+                    continue
                 else:
                     return {
                         "sku": barrel.sku,
