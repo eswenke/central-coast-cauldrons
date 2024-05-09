@@ -48,7 +48,6 @@ def get_catalog():
         ).fetchall()
 
         res_tuple = tuple([row.sku for row in result])
-        print(res_tuple)
 
         limit -= len(result)
         added_result = connection.execute(
