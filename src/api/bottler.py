@@ -253,12 +253,6 @@ def get_bottle_plan():
             )
             final_quantity = final_quantity if final_quantity <= till_cap else till_cap
 
-            print("potion: " + row.sku)
-            print("till cap: " + str(till_cap))
-            print("max from mls: " + str(max_from_mls))
-            print("max bottle each: " + str(max_bottle_each))
-            print("final quantity: " + str(final_quantity))
-
             mls = sub_ml(mls, row.type, final_quantity)
             potions_left -= final_quantity
 
