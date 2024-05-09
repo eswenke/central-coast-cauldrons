@@ -210,7 +210,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         current_ml = sum(ml_arr)
 
         selling_large = any(item.sku.startswith("LARGE") for item in wholesale_catalog)
-        threshold = .25 * ml_capacity 
+        threshold = .20 * ml_capacity 
         gold_dec = False
 
         plan = []
