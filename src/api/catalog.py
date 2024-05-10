@@ -153,6 +153,9 @@ def firesale():
             )
         ).fetchall()
 
+        if result == None:
+            return ()
+        
         pot_list = tuple(result[0][0])
 
         connection.execute(

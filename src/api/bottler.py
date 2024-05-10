@@ -175,23 +175,6 @@ def get_day():
         ).first()
         return result
 
-def which_potions():
-    with db.engine.begin() as connection:
-        day, hour = get_day()
-
-        pot_list = connection.execute(
-            sqlalchemy.text(
-                """
-                    SELECT pot_pref
-                    FROM preferences
-                    WHERE day = :day
-                """
-            ),
-            [{"day": day}],
-        ).first()[0]
-
-    return tuple(pot_list)
-
 # def which_potions():
 #     with db.engine.begin() as connection:
 #         day, hour = get_day()
@@ -200,23 +183,40 @@ def which_potions():
 #             sqlalchemy.text(
 #                 """
 #                     SELECT pot_pref
-
-#                     CASE 
-#                         WHEN :hour = 22 THEN LEAD(day, 1)
-#                         ELSE :day
-#                     END AS selected_day
-#                     CASE
-#                         WHEN :day = 'Soulday' AND :hour = 22 THEN 'Edgeday'
-#                     END AS selected_day
-
 #                     FROM preferences
-#                     WHERE day = selected_day
+#                     WHERE day = :day
 #                 """
 #             ),
-#             [{"day": day, "hour": hour}],
+#             [{"day": day}],
 #         ).first()[0]
 
 #     return tuple(pot_list)
+
+def which_potions():
+    with db.engine.begin() as connection:
+        day, hour = get_day()
+
+        pot_list = connection.execute(
+            sqlalchemy.text(
+                """
+                    SELECT pot_pref
+
+                    CASE 
+                        WHEN :hour = 22 THEN LEAD(day, 1)
+                        ELSE :day
+                    END AS selected_day
+                    CASE
+                        WHEN :day = 'Soulday' AND :hour = 22 THEN 'Edgeday'
+                    END AS selected_day
+
+                    FROM preferences
+                    WHERE day = selected_day
+                """
+            ),
+            [{"day": day, "hour": hour}],
+        ).first()[0]
+
+    return tuple(pot_list)
 
 
 if __name__ == "__main__":
