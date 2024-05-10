@@ -33,39 +33,52 @@ def get_catalog():
     # firesale()
 
     with db.engine.begin() as connection:
-        # get the 6 most recent, unique potions sold
+        # write an if to change to select only those in the pot pref list if the day has just restarted
+        # write firesale to sell everything with positive inventory that is not in pot pref list
+        pot_list = which_potions()
         result = connection.execute(
             sqlalchemy.text(
-                """
-                    SELECT sku, MAX(timestamp) as latest
-                    FROM potions_ledger
-                    WHERE quantity < 0
-                    GROUP BY sku
-                    ORDER BY latest DESC
-                    LIMIT 3
-                """
-            )
-        ).fetchall()
-
-        res_tuple = tuple([row.sku for row in result])
-
-        limit -= len(result)
-        added_result = connection.execute(
-            sqlalchemy.text(
-                """
-                    SELECT sku, MAX(timestamp) as latest
-                    FROM potions_ledger
-                    WHERE sku NOT IN :recents AND quantity > 0
-                    GROUP BY sku
-                    ORDER BY latest DESC
-                    LIMIT :limit
-                """
+                "SELECT sku, type, price FROM potions WHERE sku in :pot_list"
             ),
-            [{"recents": res_tuple, "limit": limit}],
+            [{"pot_list": pot_list}],
         ).fetchall()
 
-        for i in range(len(added_result)):
-            result.append(added_result[i])
+        # get the 6 most recent, unique potions sold
+        # result = connection.execute(
+        #     sqlalchemy.text(
+        #         """
+        #             SELECT sku, MAX(timestamp) as latest
+        #             FROM potions_ledger
+        #             WHERE quantity < 0
+        #             GROUP BY sku
+        #             ORDER BY latest DESC
+        #             LIMIT 3
+        #         """
+        #     )
+        # ).fetchall()
+
+        # res_tuple = tuple([row.sku for row in result])
+        # firesale_pots = firesale()
+        # if len(firesale_pots) != 0:
+
+
+        # limit -= len(result)
+        # added_result = connection.execute(
+        #     sqlalchemy.text(
+        #         """
+        #             SELECT sku, MAX(timestamp) as latest
+        #             FROM potions_ledger
+        #             WHERE sku NOT IN :recents AND quantity > 0
+        #             GROUP BY sku
+        #             ORDER BY latest DESC
+        #             LIMIT :limit
+        #         """
+        #     ),
+        #     [{"recents": res_tuple, "limit": limit}],
+        # ).fetchall()
+
+        # for i in range(len(added_result)):
+        #     result.append(added_result[i])
 
         for row in result:
             # get inventory
@@ -127,32 +140,24 @@ def get_day():
 
 
 def firesale():
-    #   below is SQL to get the first two potion skus that have not sold in the last 12 hours (needs testing)
-    #   add two potions to firesale at a max
-    #   check for potions that have not sold in the last 3-4 ticks (6-8 hours) that also have positive inventories > 0
-    #   NEED TO IMPLEMENT VERSIONING FOR THIS.
-    #       could add another row to each potion type that signifies a cheaper version (add a column to signal firesale price)
-    #       could add a catalog table that sets prices for that tick (since catalog is called first), reference when needed
-    #   potential to sell a lot of points that are bottled even if they are about to be purchased in the next tick/day
-    #   could make this a more manual option and only firesale certain potions that i pick via the database, use a flag
+    #   if firesale = true
+    #   change the price of whatever is in the constants table to 1 gold
+    #   return these potions
 
-    #   could also change this to give a chance to potions that haven't sold in a while to see if any of them sell.
-    #   if not, set a flag that says as much and then firesale them with the next tick or so.
-    #   or just try and sell the potions every 6-12 ticks
+    with db.engine.begin() as connection:
+        result = connection.execute(
+            sqlalchemy.text(
+                """
+                    SELECT 
+                    CASE
+                        WHEN firesale = 'true'
+                        THEN firesale_potions
+                    END AS firesale_pref
+                    FROM constants
+                """
+                )
+            ).fetchall()
 
-    #     with db.engine.begin() as connection:
-    #         result = connection.execute(
-    #             sqlalchemy.text(
-    #                 """
-    #                     SELECT DISTINCT sku
-    #                     FROM potions_ledger
-    #                     WHERE timestamp <= (SELECT MAX(timestamp) - interval '12 hours' FROM potions_ledger), quantity > 0
-    #                     ORDER BY timestamp DESC
-    #                     LIMIT 2;
-    #                 """
-    #                 )
-    #             ).fetchall()
+        print(result)
 
-    #         print(result)
-
-    return
+    return result

@@ -41,7 +41,8 @@ def buy_mini(gold, mls):
 
     return mini
 
-def buy_large(gold, mls, ml_capacity):
+def buy_large_dark(gold, mls, ml_capacity):
+    # only really need this to make sure we buy dark first, since its our lowest
 
     # CHANGE
     # once gold is > 750, a large barrel of every type will be bought
@@ -85,7 +86,7 @@ def create_wpp(
     """ """
     gold = int(gold)
     mini = buy_mini(gold, mls)
-    large, type = buy_large(gold, mls, ml_capacity)
+    # large, type = buy_large(gold, mls, ml_capacity)
 
     for barrel in wholesale_catalog:
         if (
