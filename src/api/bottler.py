@@ -18,126 +18,6 @@ class PotionInventory(BaseModel):
     quantity: int
 
 
-def max_quantity(arr1, arr2):
-    result = []
-    for x, y in zip(arr1, arr2):
-        if y != 0:
-            result.append(x // y)
-        else:
-            result.append(float("inf"))
-
-    # print(result)
-    return min(result)
-
-
-def sub_ml(arr1, arr2, max):
-    result = []
-    for x, y in zip(arr1, arr2):
-        result.append(x - (max * y))
-    return result
-
-
-def is_pure(type):
-    res = 0
-    for i in range(len(type)):
-        if type[i] > 0:
-            res += 1
-
-    if res > 1:
-        return False
-    return True
-
-
-def get_day():
-    with db.engine.begin() as connection:
-        result = connection.execute(
-            sqlalchemy.text(
-                """
-                    SELECT day
-                    FROM timestamps
-                    ORDER BY id DESC
-                    LIMIT 1;
-                """
-            )
-        ).first()[0]
-        return result
-
-
-def which_potions():
-    # return a list of potions to pass to my result query
-    # goal is to bottle potions that i know will sell
-
-    # if there are not 6 potion types with a quantity greater than 0
-    # just return those that do have quantity > 0 with a select
-    # elif there are more than 6 potion types with quantity greater than 0
-
-    # more advanced bottling plan based on popularity:
-    # make a bottling plan that just selects random potion types to bottle (not dark if dont have any):
-    # run this bottling plan for a week and gather intel into a new table (referenced below)
-    # for each day, show what potions were bottled and what potions sold the most
-    # if it has been 7 days since the last reset, start bottling based on sells the most:
-    # make a new table that selects the most popular potions from each day
-    # table will have an entry for each day of the potions week, along with the top 4 selling potions
-    # leaving 2 for firesale spots
-
-    # for bottling randomly, uses subquery to get all potions that do not have a dark ml
-    # SELECT DISTINCT *, RANDOM() as random_value
-    # FROM  (
-    #         SELECT sku
-    #         FROM potions
-    #         WHERE type[array_length(type, 1)] = 0
-    #     ) as nondark
-    # ORDER BY random_value
-    # LIMIT 6;
-    # if we need to base this on what mls we have, we could maybe do:
-    # HERE type[1] < 60 AND type[2] < 60 AND type[3] < 1 AND type[4] < 1, where the number after < is :ml[1] or 2,3,4
-
-    with db.engine.begin() as connection:
-        day = get_day()
-        pot_list = connection.execute(
-            sqlalchemy.text(
-                """
-                    SELECT pot_pref
-                    FROM preferences
-                    WHERE day = :day
-                """
-            ),
-            [{"day": day}],
-        ).first()[0]
-
-    return tuple(pot_list)
-
-
-def is_popular():
-    # if a potion type has sold multiple times in the last 6 hours, return true and then raise its threshold
-    # can keep threshold values in an array before bottling loop or something
-    # need smarter bottling logic. pot preferences is good for research purposes, but we need a more efficient
-    # bottling method. use is_poplar to bottle extra. maybe change pots pref to only have 2-3 potion types, and
-    # we focus our bottling on them?
-
-    # for example:
-    #   red pots sell back to back to back on bloomday
-    #   raise their threshold by 10 or so (increases with higher potion capacity and ml?)
-    #   space will be cleared by firesale and hopefully the sale of other potions normally
-
-    # with db.engine.begin() as connection:
-    #     result = connection.execute(
-    #         sqlalchemy.text(
-    #             """
-    #                 SELECT DISTINCT sku
-    #                 FROM potions_ledger
-    #                 WHERE timestamp <= (SELECT MAX(timestamp) - interval '12 hours' FROM potions_ledger), quantity > 0
-    #                 ORDER BY timestamp DESC
-    #                 LIMIT 3;
-    #             """
-    #         )
-    #     ).fetchall()
-
-    #     print(result)
-
-    return
-
-
 @router.post("/deliver/{order_id}")
 def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int):
     """ """
@@ -262,6 +142,81 @@ def get_bottle_plan():
         print("bottling plan:")
         print(plan)
         return plan
+    
+def max_quantity(arr1, arr2):
+    result = []
+    for x, y in zip(arr1, arr2):
+        if y != 0:
+            result.append(x // y)
+        else:
+            result.append(float("inf"))
+
+    return min(result)
+
+
+def sub_ml(arr1, arr2, max):
+    result = []
+    for x, y in zip(arr1, arr2):
+        result.append(x - (max * y))
+    return result
+
+
+def get_day():
+    with db.engine.begin() as connection:
+        result = connection.execute(
+            sqlalchemy.text(
+                """
+                    SELECT day, hour
+                    FROM timestamps
+                    ORDER BY id DESC
+                    LIMIT 1;
+                """
+            )
+        ).first()
+        return result
+
+def which_potions():
+    with db.engine.begin() as connection:
+        day, hour = get_day()
+
+        pot_list = connection.execute(
+            sqlalchemy.text(
+                """
+                    SELECT pot_pref
+                    FROM preferences
+                    WHERE day = :day
+                """
+            ),
+            [{"day": day}],
+        ).first()[0]
+
+    return tuple(pot_list)
+
+# def which_potions():
+#     with db.engine.begin() as connection:
+#         day, hour = get_day()
+
+#         pot_list = connection.execute(
+#             sqlalchemy.text(
+#                 """
+#                     SELECT pot_pref
+
+#                     CASE 
+#                         WHEN :hour = 22 THEN LEAD(day, 1)
+#                         ELSE :day
+#                     END AS selected_day
+#                     CASE
+#                         WHEN :day = 'Soulday' AND :hour = 22 THEN 'Edgeday'
+#                     END AS selected_day
+
+#                     FROM preferences
+#                     WHERE day = selected_day
+#                 """
+#             ),
+#             [{"day": day, "hour": hour}],
+#         ).first()[0]
+
+#     return tuple(pot_list)
 
 
 if __name__ == "__main__":

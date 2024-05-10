@@ -4,81 +4,65 @@ from src import database as db
 
 router = APIRouter()
 
-
-def which_potions():
-    with db.engine.begin() as connection:
-        day = get_day()
-        pot_list = connection.execute(
-            sqlalchemy.text(
-                """
-                    SELECT pot_pref
-                    FROM preferences
-                    WHERE day = :day
-                """
-            ),
-            [{"day": day}],
-        ).first()[0]
-
-    return tuple(pot_list)
-
-
 @router.get("/catalog/", tags=["catalog"])
 def get_catalog():
     """
     Each unique item combination must have only a single price.
     """
-    # pot_list = which_potions()
     plan = []
     limit = 6
-    # firesale()
 
     with db.engine.begin() as connection:
+        # backup catalog plan:
         # write an if to change to select only those in the pot pref list if the day has just restarted
         # write firesale to sell everything with positive inventory that is not in pot pref list
-        pot_list = which_potions()
-        result = connection.execute(
-            sqlalchemy.text(
-                "SELECT sku, type, price FROM potions WHERE sku in :pot_list"
-            ),
-            [{"pot_list": pot_list}],
-        ).fetchall()
-
-        # get the 6 most recent, unique potions sold
+        # pot_list = which_potions()
         # result = connection.execute(
         #     sqlalchemy.text(
-        #         """
-        #             SELECT sku, MAX(timestamp) as latest
-        #             FROM potions_ledger
-        #             WHERE quantity < 0
-        #             GROUP BY sku
-        #             ORDER BY latest DESC
-        #             LIMIT 3
-        #         """
-        #     )
-        # ).fetchall()
-
-        # res_tuple = tuple([row.sku for row in result])
-        # firesale_pots = firesale()
-        # if len(firesale_pots) != 0:
-
-
-        # limit -= len(result)
-        # added_result = connection.execute(
-        #     sqlalchemy.text(
-        #         """
-        #             SELECT sku, MAX(timestamp) as latest
-        #             FROM potions_ledger
-        #             WHERE sku NOT IN :recents AND quantity > 0
-        #             GROUP BY sku
-        #             ORDER BY latest DESC
-        #             LIMIT :limit
-        #         """
+        #         "SELECT sku, type, price FROM potions WHERE sku in :pot_list"
         #     ),
-        #     [{"recents": res_tuple, "limit": limit}],
+        #     [{"pot_list": pot_list}],
         # ).fetchall()
 
-        # for i in range(len(added_result)):
-        #     result.append(added_result[i])
+        # get the 6 most recent, unique potions sold
+        result = connection.execute(
+            sqlalchemy.text(
+                """
+                    SELECT sku, MAX(timestamp) as latest
+                    FROM potions_ledger
+                    WHERE quantity < 0
+                    GROUP BY sku
+                    ORDER BY latest DESC
+                    LIMIT 3
+                """
+            )
+        ).fetchall()
+
+        firesale_pots = firesale()
+        if len(firesale_pots) != 0:
+            for i in range(len(firesale_pots)):
+                result.append(firesale_pots[i])
+
+        res_tuple = tuple([row.sku for row in result])
+
+        limit -= len(result)
+        added_result = connection.execute(
+            sqlalchemy.text(
+                """
+                    SELECT sku, MAX(timestamp) as latest
+                    FROM potions_ledger
+                    WHERE sku NOT IN :recents AND quantity > 0
+                    GROUP BY sku
+                    ORDER BY latest DESC
+                    LIMIT :limit
+                """
+            ),
+            [{"recents": res_tuple, "limit": limit}],
+        ).fetchall()
+
+        for i in range(len(added_result)):
+            if limit > 0:
+                result.append(added_result[i])
 
         for row in result:
             # get inventory
@@ -122,6 +106,21 @@ def get_catalog():
     print(plan)
     return plan
 
+def which_potions():
+    with db.engine.begin() as connection:
+        day = get_day()
+        pot_list = connection.execute(
+            sqlalchemy.text(
+                """
+                    SELECT pot_pref
+                    FROM preferences
+                    WHERE day = :day
+                """
+            ),
+            [{"day": day}],
+        ).first()[0]
+
+    return tuple(pot_list)
 
 def get_day():
     with db.engine.begin() as connection:
@@ -140,10 +139,6 @@ def get_day():
 
 
 def firesale():
-    #   if firesale = true
-    #   change the price of whatever is in the constants table to 1 gold
-    #   return these potions
-
     with db.engine.begin() as connection:
         result = connection.execute(
             sqlalchemy.text(
@@ -155,9 +150,26 @@ def firesale():
                     END AS firesale_pref
                     FROM constants
                 """
-                )
-            ).fetchall()
+            )
+        ).fetchall()
 
-        print(result)
+        pot_list = tuple(result[0][0])
+
+        connection.execute(
+            sqlalchemy.text(
+                """
+                    UPDATE potions SET price = 1 WHERE sku in :pot_list;
+                    UPDATE constants SET firesale = 'false';
+                """
+            ),
+            [{"pot_list": pot_list}],
+        )
+
+        result = connection.execute(
+            sqlalchemy.text(
+                "SELECT sku, type, 1 AS price FROM potions WHERE sku in :pot_list"
+            ),
+            [{"pot_list": pot_list}],
+        ).fetchall()
 
     return result
