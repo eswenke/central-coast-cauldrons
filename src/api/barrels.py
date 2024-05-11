@@ -5,6 +5,7 @@ import sqlalchemy
 from sqlalchemy.exc import IntegrityError
 from src import database as db
 import random
+import math
 
 router = APIRouter(
     prefix="/barrels",
@@ -41,36 +42,41 @@ def buy_mini(gold, mls):
 
     return mini
 
-def buy_large_dark(gold, mls, ml_capacity):
-    # only really need this to make sure we buy dark first, since its our lowest
+def buy_small(gold, ml_capacity):
+    small = True
+    if gold > 3500 and ml_capacity > 10000:
+        small = False
 
-    # CHANGE
-    # once gold is > 750, a large barrel of every type will be bought
-    # wpp plan wont buy if we don't have enough gold, so don't check those things here 
+    return small
 
-    # just change to make an array of the ml types from highest to least priority
-    # only add a ml type to this array if there is capacity for it
-    # keep track of how much total capacity the array will need
-    # only add those to the array that are below around .2 or less 
-    # (.2 is experimnetal number, just need to test it out and monitor as shop does better)
+def buy_large(gold, mls, ml_capacity, ml_limit):
+    # index_to_buy = -1
+    # lowest = math.inf
+    type = -1
 
-    large = False
-    index_to_buy = -1
-
-    if ml_capacity == 10000 or gold < 750:
-        return large, index_to_buy
+    if ml_capacity == 10000 or gold < 750 or ml_limit < 10000:
+        return -1
     
-    if mls[3] < 100: # if little dark ml, buy that large barrel
-        return large, 3
-    
-    sum_ml = sum(mls)
-    for i in range(len(mls)):
-        mls[i] = mls[i] / sum_ml
-        if mls[i] < .20 and i != 3: # exclude dark ml from this loop
-            index_to_buy = i
-            large = True
+    if mls[3] < 500:
+        type = [0, 0, 0, 1]
 
-    return large
+    # for i in range(len(mls)):
+    #     if mls[i] < lowest:
+    #         lowest = mls[i]
+    #         index_to_buy = i
+
+    # type = [0,0,0,0]
+    # if index_to_buy > 0:
+    #     type[i] = 1
+
+    # sum_ml = sum(mls)
+    # for i in range(len(mls)):
+    #     mls[i] = mls[i] / sum_ml
+    #     if mls[i] < .20 and i != 3: # exclude dark ml from this loop
+    #         index_to_buy[i] = 1
+    #         large = True
+
+    return type
 
 
 
@@ -81,12 +87,20 @@ def create_wpp(
     gold,
     ml_limit,
     mls,
-    ml_capacity
+    ml_capacity,
+    index,
+    selling_large
 ):
     """ """
     gold = int(gold)
     mini = buy_mini(gold, mls)
-    # large, type = buy_large(gold, mls, ml_capacity)
+    small = buy_small(gold, ml_capacity)
+    type = buy_large(gold, mls, ml_capacity, ml_limit)
+    threshold = .33 * ml_capacity
+
+    print("large: " + str(selling_large))
+    print("type: " + str(type))
+    print("potion_type: " + str(potion_type))
 
     for barrel in wholesale_catalog:
         if (
@@ -96,19 +110,32 @@ def create_wpp(
         ):
             if not mini and ("MINI" in barrel.sku):
                 continue
-            # elif ((not large or barrel.potion_type != type) and ("LARGE" in barrel.sku)):
-            #     continue
+            elif not small and ("SMALL" in barrel.sku):
+                continue       
+            elif not selling_large and ("LARGE" in barrel.sku):
+                continue
+            elif selling_large and potion_type != type: # only buy the large of dark and nothing else on that tick
+                continue
             else:
                 q_max = ml_limit // barrel.ml_per_barrel
                 q_buyable = gold // barrel.price
+                q_threshold = (threshold - mls[index]) // barrel.ml_per_barrel
+
+                if selling_large and barrel.potion_type == type and ml_limit > 10000: # skip to the dark barrel
+                    if "LARGE" not in barrel.sku:
+                        continue
+                    q_threshold = 1
+
                 q_final = q_buyable if q_max >= q_buyable else q_max
                 q_final = q_final if q_final <= barrel.quantity else barrel.quantity
+                q_final = q_final if q_final <= q_threshold else q_threshold
 
-                # print("q_max: " + str(q_max))
-                # print("q_buy: " + str(q_buyable))
-                # print("q_final: " + str(q_final))
+                print("q_max: " + str(q_max))
+                print("q_buy: " + str(q_buyable))
+                print("q_threshold: " + str(q_threshold))
+                print("q_final: " + str(q_final))
 
-                if q_max <= 0:
+                if q_final <= 0:
                     continue
                 else:
                     return {
@@ -211,7 +238,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         current_ml = sum(ml_arr)
 
         selling_large = any(item.sku.startswith("LARGE") for item in wholesale_catalog)
-        threshold = .20 * ml_capacity 
+        threshold = .15 * ml_capacity 
         gold_dec = False
 
         plan = []
@@ -232,7 +259,9 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                     gold / 4 if (not gold_dec) else gold,
                     ml_limit,
                     ml_arr,
-                    ml_capacity
+                    ml_capacity,
+                    i,
+                    selling_large
                 )
                 if barrel_purchase is not None:
                     price = next(

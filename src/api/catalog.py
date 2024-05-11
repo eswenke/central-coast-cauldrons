@@ -43,7 +43,11 @@ def get_catalog():
             for i in range(len(firesale_pots)):
                 result.append(firesale_pots[i])
 
+        print("firesale_pots: " + str(firesale_pots))
+
         res_tuple = tuple([row.sku for row in result])
+
+        print("res_tuple: " + str(res_tuple))
 
         limit -= len(result)
         added_result = connection.execute(
