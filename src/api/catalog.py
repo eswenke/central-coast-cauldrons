@@ -38,10 +38,10 @@ def get_catalog():
             )
         ).fetchall()
 
-        # firesale_pots = firesale()
-        # if len(firesale_pots) != 0:
-        #     for i in range(len(firesale_pots)):
-        #         result.append(firesale_pots[i])
+        firesale_pots = firesale()
+        if len(firesale_pots) != 0:
+            for i in range(len(firesale_pots)):
+                result.append(firesale_pots[i])
 
         res_tuple = tuple([row.sku for row in result])
 
@@ -153,7 +153,7 @@ def firesale():
             )
         ).fetchall()
 
-        if result == None:
+        if result[0][0] == None:
             return ()
         
         pot_list = tuple(result[0][0])
