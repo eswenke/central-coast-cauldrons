@@ -53,12 +53,14 @@ def buy_large(gold, mls, ml_capacity, ml_limit):
     # index_to_buy = -1
     # lowest = math.inf
     type = -1
+    large = False
 
     if ml_capacity == 10000 or gold < 750 or ml_limit < 10000:
-        return -1
+        return large, -1
     
     if mls[3] < 500:
         type = [0, 0, 0, 1]
+        large = True
 
     # for i in range(len(mls)):
     #     if mls[i] < lowest:
@@ -76,7 +78,7 @@ def buy_large(gold, mls, ml_capacity, ml_limit):
     #         index_to_buy[i] = 1
     #         large = True
 
-    return type
+    return large, type
 
 
 
@@ -95,7 +97,7 @@ def create_wpp(
     gold = int(gold)
     mini = buy_mini(gold, mls)
     small = buy_small(gold, ml_capacity)
-    type = buy_large(gold, mls, ml_capacity, ml_limit)
+    large, type = buy_large(gold, mls, ml_capacity, ml_limit)
     threshold = .33 * ml_capacity
 
     print("large: " + str(selling_large))
@@ -114,7 +116,7 @@ def create_wpp(
                 continue       
             elif not selling_large and ("LARGE" in barrel.sku):
                 continue
-            elif selling_large and potion_type != type: # only buy the large of dark and nothing else on that tick
+            elif large and potion_type != type: # only buy the large of dark and nothing else on that tick
                 continue
             else:
                 q_max = ml_limit // barrel.ml_per_barrel
@@ -238,7 +240,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         current_ml = sum(ml_arr)
 
         selling_large = any(item.sku.startswith("LARGE") for item in wholesale_catalog)
-        threshold = .01 * ml_capacity 
+        threshold = .20 * ml_capacity 
         gold_dec = False
 
         plan = []
