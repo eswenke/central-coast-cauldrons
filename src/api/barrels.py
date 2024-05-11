@@ -142,7 +142,7 @@ def create_wpp(
                 else:
                     return {
                         "sku": barrel.sku,
-                        "quantity": q_final,
+                        "quantity": int(q_final),
                     }
 
     return None
