@@ -122,6 +122,8 @@ def create_wpp(
                 q_max = ml_limit // barrel.ml_per_barrel
                 q_buyable = gold // barrel.price
                 q_threshold = (threshold - mls[index]) // barrel.ml_per_barrel
+                if q_threshold < 0:
+                    q_threshold = 0
 
                 if selling_large and barrel.potion_type == type and ml_limit > 10000: # skip to the dark barrel
                     if "LARGE" not in barrel.sku:
