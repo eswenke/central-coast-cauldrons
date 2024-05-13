@@ -106,8 +106,8 @@ def create_wpp(
                 continue
             elif not small and ("SMALL" in barrel.sku):
                 continue
-            # elif large and potion_type != type: # only buy the large of dark and nothing else on that tick
-            #     continue
+            elif selling_large and ("LARGE" in barrel.sku): # only buy the large of dark and nothing else on that tick
+                continue
             else:
                 q_max = ml_limit // barrel.ml_per_barrel
                 q_buyable = gold // barrel.price
