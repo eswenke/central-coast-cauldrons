@@ -104,8 +104,6 @@ def get_bottle_plan():
                 ).scalar_one()
             )
 
-        print(result)
-
         red_ml, green_ml, blue_ml, dark_ml = mls
         mls = [red_ml, green_ml, blue_ml, dark_ml]
         potions_left = potion_capacity - potions
@@ -119,7 +117,7 @@ def get_bottle_plan():
         post_threshold = potion_capacity // len(result)
         max_bottle_each = potions_left // len(result)
 
-        print("potions_left" + str(potions_left))
+        print("potions_left: " + str(potions_left))
 
         if potions_left < len(result):
             max_bottle_each = potions_left
@@ -143,8 +141,8 @@ def get_bottle_plan():
             plan.append({"potion_type": row.type, "quantity": final_quantity})
             i += 1
 
-        print("capacity" + str(potion_capacity))
-        print("potions left" + str(potions_left))
+        print("capacity: " + str(potion_capacity))
+        print("potions left: " + str(potions_left))
 
         print("bottling plan:")
         print(plan)

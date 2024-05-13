@@ -16,57 +16,57 @@ def get_catalog():
         # backup catalog plan:
         # write an if to change to select only those in the pot pref list if the day has just restarted
         # write firesale to sell everything with positive inventory that is not in pot pref list
-        # pot_list = which_potions()
-        # result = connection.execute(
-        #     sqlalchemy.text(
-        #         "SELECT sku, type, price FROM potions WHERE sku in :pot_list"
-        #     ),
-        #     [{"pot_list": pot_list}],
-        # ).fetchall()
-
-        # get the 6 most recent, unique potions sold
+        pot_list = which_potions()
         result = connection.execute(
             sqlalchemy.text(
-                """
-                    SELECT sku, MAX(timestamp) as latest
-                    FROM potions_ledger
-                    WHERE quantity < 0
-                    GROUP BY sku
-                    ORDER BY latest DESC
-                    LIMIT 3
-                """
-            )
-        ).fetchall()
-
-        firesale_pots = firesale()
-        if len(firesale_pots) != 0:
-            for i in range(len(firesale_pots)):
-                result.append(firesale_pots[i])
-
-        print("firesale_pots: " + str(firesale_pots))
-
-        res_tuple = tuple([row.sku for row in result])
-
-        print("res_tuple: " + str(res_tuple))
-
-        limit -= len(result)
-        added_result = connection.execute(
-            sqlalchemy.text(
-                """
-                    SELECT sku, MAX(timestamp) as latest
-                    FROM potions_ledger
-                    WHERE sku NOT IN :recents AND quantity > 0
-                    GROUP BY sku
-                    ORDER BY latest DESC
-                    LIMIT :limit
-                """
+                "SELECT sku, type, price FROM potions WHERE sku in :pot_list"
             ),
-            [{"recents": res_tuple, "limit": limit}],
+            [{"pot_list": pot_list}],
         ).fetchall()
 
-        for i in range(len(added_result)):
-            if limit > 0:
-                result.append(added_result[i])
+        # get the 6 most recent, unique potions sold
+        # result = connection.execute(
+        #     sqlalchemy.text(
+        #         """
+        #             SELECT sku, MAX(timestamp) as latest
+        #             FROM potions_ledger
+        #             WHERE quantity < 0
+        #             GROUP BY sku
+        #             ORDER BY latest DESC
+        #             LIMIT 3
+        #         """
+        #     )
+        # ).fetchall()
+
+        # firesale_pots = firesale()
+        # if len(firesale_pots) != 0:
+        #     for i in range(len(firesale_pots)):
+        #         result.append(firesale_pots[i])
+
+        # print("firesale_pots: " + str(firesale_pots))
+
+        # res_tuple = tuple([row.sku for row in result])
+
+        # print("res_tuple: " + str(res_tuple))
+
+        # limit -= len(result)
+        # added_result = connection.execute(
+        #     sqlalchemy.text(
+        #         """
+        #             SELECT sku, MAX(timestamp) as latest
+        #             FROM potions_ledger
+        #             WHERE sku NOT IN :recents AND quantity > 0
+        #             GROUP BY sku
+        #             ORDER BY latest DESC
+        #             LIMIT :limit
+        #         """
+        #     ),
+        #     [{"recents": res_tuple, "limit": limit}],
+        # ).fetchall()
+
+        # for i in range(len(added_result)):
+        #     if limit > 0:
+        #         result.append(added_result[i])
 
         for row in result:
             # get inventory
