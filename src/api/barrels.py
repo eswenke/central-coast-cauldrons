@@ -106,7 +106,7 @@ def create_wpp(
                 continue
             elif not small and ("SMALL" in barrel.sku):
                 continue
-            elif selling_large and ("LARGE" in barrel.sku): # only buy the large of dark and nothing else on that tick
+            elif selling_large and ("LARGE" not in barrel.sku): # only buy the large of dark and nothing else on that tick
                 continue
             else:
                 q_max = ml_limit // barrel.ml_per_barrel
