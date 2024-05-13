@@ -104,6 +104,8 @@ def get_bottle_plan():
                 ).scalar_one()
             )
 
+        print(result)
+
         red_ml, green_ml, blue_ml, dark_ml = mls
         mls = [red_ml, green_ml, blue_ml, dark_ml]
         potions_left = potion_capacity - potions
@@ -194,29 +196,38 @@ def get_day():
 
 def which_potions():
     with db.engine.begin() as connection:
-        day, hour = get_day()
+        # day, hour = get_day()
+
+        # pot_list = connection.execute(
+        #     sqlalchemy.text(
+        #         """
+        #             with days as (
+        #                 SELECT 
+        #                     day, 
+        #                     pot_pref, 
+        #                     LEAD(day, 1, 'Edgeday') OVER (ORDER BY id) AS next_day
+        #                 FROM preferences 
+        #             )
+        #             select
+        #             case
+        #                 when :hour = 22 THEN (select 
+        #                                     pot_pref 
+        #                                     from days 
+        #                                     where day = (select next_day from days where day = :day))
+        #                 else (select pot_pref from days where day = :day)
+        #             end as potion_preferences
+        #         """
+        #     ),
+        #     [{"day": day, "hour": hour}],
+        # ).first()[0]
 
         pot_list = connection.execute(
             sqlalchemy.text(
                 """
-                    with days as (
-                        SELECT 
-                            day, 
-                            pot_pref, 
-                            LEAD(day, 1, 'Edgeday') OVER (ORDER BY id) AS next_day
-                        FROM preferences 
-                    )
-                    select
-                    case
-                        when :hour = 22 THEN (select 
-                                            pot_pref 
-                                            from days 
-                                            where day = (select next_day from days where day = :day))
-                        else (select pot_pref from days where day = :day)
-                    end as potion_preferences
+                SELECT all_pots 
+                FROM constants
                 """
-            ),
-            [{"day": day, "hour": hour}],
+            )
         ).first()[0]
 
     return tuple(pot_list)
