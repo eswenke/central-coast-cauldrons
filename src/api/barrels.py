@@ -23,14 +23,6 @@ class Barrel(BaseModel):
 
     quantity: int
 
-# add a function that will buy large barrel early on before we have 750*4 gold
-#       this function should figure out what the best type to buy would be based on potions sold in the last day
-
-# write a query that sums all potions over the last 24 hours
-#       creates a list of the most sold potions and their quantities
-#       can use this to determine which large barrel to buy for the above function
-#       can use this to figure out what ml to bottle more of? catalog?
-
 def buy_mini(gold, mls):
     mini = False
     i = 0
@@ -97,7 +89,7 @@ def create_wpp(
     gold = int(gold)
     mini = buy_mini(gold, mls)
     small = buy_small(gold, ml_capacity)
-    large, type = buy_large(gold, mls, ml_capacity, ml_limit)
+    # large, type = buy_large(gold, mls, ml_capacity, ml_limit)
     threshold = .33 * ml_capacity
 
     # print("large: " + str(selling_large))
@@ -113,11 +105,9 @@ def create_wpp(
             if not mini and ("MINI" in barrel.sku):
                 continue
             elif not small and ("SMALL" in barrel.sku):
-                continue       
-            elif not selling_large and ("LARGE" in barrel.sku):
                 continue
-            elif large and potion_type != type: # only buy the large of dark and nothing else on that tick
-                continue
+            # elif large and potion_type != type: # only buy the large of dark and nothing else on that tick
+            #     continue
             else:
                 q_max = ml_limit // barrel.ml_per_barrel
                 q_buyable = gold // barrel.price
@@ -125,10 +115,10 @@ def create_wpp(
                 if q_threshold < 0:
                     q_threshold = 0
 
-                if selling_large and barrel.potion_type == type and ml_limit > 10000: # skip to the dark barrel
-                    if "LARGE" not in barrel.sku:
-                        continue
-                    q_threshold = 1
+                # if selling_large and barrel.potion_type == type and ml_limit > 10000: # skip to the dark barrel
+                #     if "LARGE" not in barrel.sku:
+                #         continue
+                #     q_threshold = 1
 
                 q_final = q_buyable if q_max >= q_buyable else q_max
                 q_final = q_final if q_final <= barrel.quantity else barrel.quantity
