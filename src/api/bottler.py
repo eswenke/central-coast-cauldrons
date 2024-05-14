@@ -114,10 +114,12 @@ def get_bottle_plan():
                 del result[i]
                 del inventory[i]
 
-        post_threshold = potion_capacity // len(result)
+        # post_threshold = potion_capacity // len(result)
+        post_threshold = pre_threshold
         max_bottle_each = potions_left // len(result)
 
-        print("potions_left: " + str(potions_left))
+        # print("potions_left: " + str(potions_left))
+        print("threshold: " + str(post_threshold))
 
         if potions_left < len(result):
             max_bottle_each = potions_left
@@ -141,8 +143,8 @@ def get_bottle_plan():
             plan.append({"potion_type": row.type, "quantity": final_quantity})
             i += 1
 
-        print("capacity: " + str(potion_capacity))
-        print("potions left: " + str(potions_left))
+        # print("capacity: " + str(potion_capacity))
+        # print("potions left: " + str(potions_left))
 
         print("bottling plan:")
         print(plan)
