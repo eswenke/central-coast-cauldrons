@@ -119,7 +119,9 @@ def get_bottle_plan():
         max_bottle_each = potions_left // len(result)
 
         # print("potions_left: " + str(potions_left))
-        print("threshold: " + str(post_threshold))
+        print(inventory)
+        print(len(result))
+        print(post_threshold)
 
         if potions_left < len(result):
             max_bottle_each = potions_left
