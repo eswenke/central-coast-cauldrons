@@ -109,6 +109,9 @@ def get_bottle_plan():
         potions_left = potion_capacity - potions
         threshold = potion_capacity // len(result)
 
+        print(len(result))
+        print(len(inventory))
+
         for i, row in enumerate(result):
             print(row.sku)
             if inventory[i] >= threshold:
@@ -130,7 +133,7 @@ def get_bottle_plan():
         i = 0
         for row in result:
             max_from_mls = max_quantity(mls, row.type)
-            if max_from_mls == 0 or inventory[i] >= threshold:
+            if max_from_mls == 0 or inventory[i] >= threshold or inventory[i] <= 0:
                 i += 1
                 continue
 
