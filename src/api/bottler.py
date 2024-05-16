@@ -126,6 +126,8 @@ def get_bottle_plan():
 
         for i, row in enumerate(inventory):
             till_cap = (threshold - inventory[i]) if (threshold - inventory[i]) <= potions_left else potions_left
+            if till_cap <= 0:
+                till_cap = 0
             inventory[i] = till_cap
             potions_left -= till_cap
 
