@@ -110,7 +110,9 @@ def get_bottle_plan():
         threshold = potion_capacity // len(result)
 
         for i, row in enumerate(result):
+            print(inventory[i])
             if inventory[i] >= threshold:
+                print("deleting... " + str(inventory[i]))
                 del result[i]
                 del inventory[i]
 
