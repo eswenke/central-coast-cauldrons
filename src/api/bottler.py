@@ -107,50 +107,44 @@ def get_bottle_plan():
         red_ml, green_ml, blue_ml, dark_ml = mls
         mls = [red_ml, green_ml, blue_ml, dark_ml]
         potions_left = potion_capacity - potions
-        pre_threshold = potion_capacity // len(result)
+        threshold = potion_capacity // len(result)
 
         for i, row in enumerate(result):
-            if inventory[i] >= pre_threshold:
+            if inventory[i] >= threshold:
                 del result[i]
                 del inventory[i]
 
-        # post_threshold = potion_capacity // len(result)
-        post_threshold = pre_threshold
-        max_bottle_each = potions_left // len(result)
+        
+        # max_bottle_each = potions_left // len(result)
 
-        # print("potions_left: " + str(potions_left))
-        print(inventory)
-        print(len(result))
-        print(post_threshold)
-        print("max bottle each: " + str(max_bottle_each))
+        for i, row in enumerate(inventory):
+            till_cap = (threshold - inventory[i]) if (threshold - inventory[i]) <= potions_left else potions_left
+            inventory[i] = till_cap
 
-        if potions_left < len(result):
-            max_bottle_each = potions_left
+        # if potions_left < len(result):
+        #     max_bottle_each = potions_left
 
         i = 0
         for row in result:
             max_from_mls = max_quantity(mls, row.type)
-            if max_from_mls == 0 or inventory[i] >= post_threshold or potions_left == 0:
+            if max_from_mls == 0 or inventory[i] >= threshold or potions_left <= 0:
                 i += 1
                 continue
 
-            till_cap = post_threshold - inventory[i]
-            print("till cap: " + str(till_cap))
-            print("max from mls: " + str(max_from_mls))
+            # till_cap = threshold - inventory[i]
+            till_cap = inventory[i]
 
-            final_quantity = (
-                max_from_mls if max_from_mls <= max_bottle_each else max_bottle_each
-            )
-            final_quantity = final_quantity if final_quantity <= till_cap else till_cap
+            # final_quantity = (
+            #     max_from_mls if max_from_mls <= max_bottle_each else max_bottle_each
+            # )
+            # final_quantity = final_quantity if final_quantity <= till_cap else till_cap
+            final_quantity = max_from_mls if max_from_mls <= till_cap else till_cap
 
             mls = sub_ml(mls, row.type, final_quantity)
             potions_left -= final_quantity
 
             plan.append({"potion_type": row.type, "quantity": final_quantity})
             i += 1
-
-        # print("capacity: " + str(potion_capacity))
-        # print("potions left: " + str(potions_left))
 
         print("bottling plan:")
         print(plan)
