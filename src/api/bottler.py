@@ -122,6 +122,7 @@ def get_bottle_plan():
         print(inventory)
         print(len(result))
         print(post_threshold)
+        print("max bottle each: " + str(max_bottle_each))
 
         if potions_left < len(result):
             max_bottle_each = potions_left
@@ -134,6 +135,9 @@ def get_bottle_plan():
                 continue
 
             till_cap = post_threshold - inventory[i]
+            print("till cap: " + str(till_cap))
+            print("max from mls: " + str(max_from_mls))
+
             final_quantity = (
                 max_from_mls if max_from_mls <= max_bottle_each else max_bottle_each
             )
