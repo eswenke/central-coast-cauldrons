@@ -121,15 +121,19 @@ def get_bottle_plan():
             till_cap = (threshold - inventory[i]) if (threshold - inventory[i]) <= potions_left else potions_left
             if till_cap <= 0:
                 till_cap = 0
-                
+
             inventory[i] = till_cap
             potions_left -= till_cap
 
 
         i = 0
         for row in result:
+            if inventory[i] >= threshold or inventory[i] < 0 or row == -1:
+                i += 1
+                continue
+
             max_from_mls = max_quantity(mls, row.type)
-            if max_from_mls == 0 or inventory[i] >= threshold or inventory[i] < 0 or row == -1:
+            if max_from_mls == 0:
                 i += 1
                 continue
 
