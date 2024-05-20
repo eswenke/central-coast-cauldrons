@@ -109,35 +109,27 @@ def get_bottle_plan():
         potions_left = potion_capacity - potions
         threshold = potion_capacity // len(result)
 
-        print(len(result))
-        print(len(inventory))
-
         for i in range(len(result)):
             if inventory[i] >= threshold:
-                del result[i]
-                del inventory[i]
-
-        # max_bottle_each = potions_left // len(result)
-        print(inventory)
-        print(potions_left)
+                result[i] = -1
+                inventory[i] = -1
 
         for i in range(len(inventory)):
+            if inventory[i] == -1:
+                continue 
+            
             till_cap = (threshold - inventory[i]) if (threshold - inventory[i]) <= potions_left else potions_left
             if till_cap <= 0:
                 till_cap = 0
+                
             inventory[i] = till_cap
             potions_left -= till_cap
 
-        print(inventory)
-        print(potions_left)
-
-        # if potions_left < len(result):
-        #     max_bottle_each = potions_left
 
         i = 0
         for row in result:
             max_from_mls = max_quantity(mls, row.type)
-            if max_from_mls == 0 or inventory[i] >= threshold or inventory[i] < 0:
+            if max_from_mls == 0 or inventory[i] >= threshold or inventory[i] < 0 or row == -1:
                 i += 1
                 continue
 
