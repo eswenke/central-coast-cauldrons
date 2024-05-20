@@ -132,6 +132,7 @@ def get_bottle_plan():
 
         i = 0
         for row in result:
+            print(row)
             if inventory[i] >= threshold or inventory[i] < 0 or row == -1:
                 i += 1
                 continue
