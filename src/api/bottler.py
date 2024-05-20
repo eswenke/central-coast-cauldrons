@@ -112,22 +112,16 @@ def get_bottle_plan():
         print(len(result))
         print(len(inventory))
 
-        for i, row in enumerate(result):
-            print(row.sku)
+        for i in range(len(result)):
             if inventory[i] >= threshold:
-                print("deleting... " + str(inventory[i]) + " " + row.sku)
                 del result[i]
                 del inventory[i]
-
-        for j in range(len(inventory)):
-            if inventory[j] <= 0:
-                del inventory[j]
 
         # max_bottle_each = potions_left // len(result)
         print(inventory)
         print(potions_left)
 
-        for i, row in enumerate(inventory):
+        for i in range(len(inventory)):
             till_cap = (threshold - inventory[i]) if (threshold - inventory[i]) <= potions_left else potions_left
             if till_cap <= 0:
                 till_cap = 0
