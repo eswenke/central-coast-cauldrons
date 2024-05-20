@@ -140,7 +140,7 @@ def get_bottle_plan():
         i = 0
         for row in result:
             max_from_mls = max_quantity(mls, row.type)
-            if max_from_mls == 0 or inventory[i] >= threshold or inventory[i] <= 0:
+            if max_from_mls == 0 or inventory[i] >= threshold or inventory[i] < 0:
                 i += 1
                 continue
 
