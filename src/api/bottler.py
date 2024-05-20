@@ -103,7 +103,6 @@ def get_bottle_plan():
                     [{"sku": row.sku}],
                 ).scalar_one()
             )
-            print(row.sku)
 
         red_ml, green_ml, blue_ml, dark_ml = mls
         mls = [red_ml, green_ml, blue_ml, dark_ml]
@@ -126,14 +125,10 @@ def get_bottle_plan():
             inventory[i] = till_cap
             potions_left -= till_cap
 
-            print("potion: " + result[i].sku)
-            print("inventory: " + str(inventory[i]))
-
 
         i = 0
         for row in result:
-            print(row)
-            if inventory[i] >= threshold or inventory[i] < 0 or row == -1:
+            if inventory[i] < 0 or row == -1:
                 i += 1
                 continue
 
