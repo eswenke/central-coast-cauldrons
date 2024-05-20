@@ -119,9 +119,9 @@ def get_bottle_plan():
                 del result[i]
                 del inventory[i]
 
-        for i in range(len(inventory)):
-            if inventory[i] <= 0:
-                del inventory[i]
+        for j in range(len(inventory)):
+            if inventory[j] <= 0:
+                del inventory[j]
 
         # max_bottle_each = potions_left // len(result)
         print(inventory)
