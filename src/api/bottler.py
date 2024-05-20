@@ -103,6 +103,7 @@ def get_bottle_plan():
                     [{"sku": row.sku}],
                 ).scalar_one()
             )
+            print(row.sku)
 
         red_ml, green_ml, blue_ml, dark_ml = mls
         mls = [red_ml, green_ml, blue_ml, dark_ml]
@@ -124,6 +125,9 @@ def get_bottle_plan():
 
             inventory[i] = till_cap
             potions_left -= till_cap
+
+            print("potion: " + result[i].sku)
+            print("inventory: " + str(inventory[i]))
 
 
         i = 0
