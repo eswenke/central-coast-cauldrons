@@ -98,7 +98,7 @@ def get_bottle_plan():
             inventory.append(
                 connection.execute(
                     sqlalchemy.text(
-                        "SELECT COALESCE(SUM(quantity), 0) FROM potions_ledger WHERE sku = :sku"
+                        "SELECT q FROM better_potion_view WHERE sku = :sku"
                     ),
                     [{"sku": row.sku}],
                 ).scalar_one()
