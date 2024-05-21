@@ -90,7 +90,7 @@ def create_wpp(
     mini = buy_mini(gold, mls)
     small = buy_small(gold, ml_capacity)
     # large, type = buy_large(gold, mls, ml_capacity, ml_limit)
-    threshold = .25 * ml_capacity
+    threshold = .20 * ml_capacity
 
     # print("large: " + str(selling_large))
     # print("type: " + str(type))
@@ -106,8 +106,8 @@ def create_wpp(
                 continue
             elif not small and ("SMALL" in barrel.sku):
                 continue
-            elif "MEDIUM" in barrel.sku:
-                continue
+            # elif "MEDIUM" in barrel.sku:
+            #     continue
             elif selling_large and ("LARGE" not in barrel.sku): 
                 continue
             else:
@@ -234,7 +234,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         current_ml = sum(ml_arr)
 
         selling_large = any(item.sku.startswith("LARGE") for item in wholesale_catalog)
-        threshold = .15 * ml_capacity 
+        threshold = .20 * ml_capacity 
         gold_dec = False
 
         plan = []
