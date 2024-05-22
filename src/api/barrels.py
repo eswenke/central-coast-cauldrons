@@ -148,6 +148,7 @@ def create_wpp(
 def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
     """ """
     print(f"barrels delievered: {barrels_delivered} order_id: {order_id}")
+    
 
     g_ml = 0
     r_ml = 0
