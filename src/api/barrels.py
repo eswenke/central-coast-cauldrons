@@ -91,11 +91,11 @@ def create_wpp(
     small = buy_small(gold, ml_capacity)
     # large, type = buy_large(gold, mls, ml_capacity, ml_limit)
     threshold = .20 * ml_capacity
-    threshold  = .3 if selling_large else threshold
+    threshold  = .3 * ml_capacity if selling_large else threshold
 
-    print("large: " + str(selling_large))
-    print("type: " + str(type))
-    print("potion_type: " + str(potion_type))
+    # print("large: " + str(selling_large))
+    # print("type: " + str(type))
+    # print("potion_type: " + str(potion_type))
 
     for barrel in wholesale_catalog:
         if (
@@ -127,10 +127,10 @@ def create_wpp(
                 q_final = q_final if q_final <= barrel.quantity else barrel.quantity
                 q_final = q_final if q_final <= q_threshold else q_threshold
 
-                print("q_max: " + str(q_max))
-                print("q_buy: " + str(q_buyable))
-                print("q_threshold: " + str(q_threshold))
-                print("q_final: " + str(q_final))
+                # print("q_max: " + str(q_max))
+                # print("q_buy: " + str(q_buyable))
+                # print("q_threshold: " + str(q_threshold))
+                # print("q_final: " + str(q_final))
 
                 if q_final <= 0:
                     continue
