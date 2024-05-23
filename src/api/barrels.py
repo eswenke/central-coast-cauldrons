@@ -90,7 +90,7 @@ def create_wpp(
     mini = buy_mini(gold, mls)
     small = buy_small(gold, ml_capacity)
     # large, type = buy_large(gold, mls, ml_capacity, ml_limit)
-    threshold = .10 * ml_capacity
+    threshold = .15 * ml_capacity
     threshold  = .3 * ml_capacity if selling_large else threshold
 
     # print("large: " + str(selling_large))
