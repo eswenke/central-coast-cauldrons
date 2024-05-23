@@ -105,8 +105,8 @@ def create_wpp(
         ):
             if not mini and ("MINI" in barrel.sku):
                 continue
-            # elif not small and ("SMALL" in barrel.sku):
-            #     continue
+            elif not small and ("SMALL" in barrel.sku):
+                continue
             # elif "MEDIUM" in barrel.sku:
             #     continue
             elif selling_large and ("LARGE" not in barrel.sku): 
