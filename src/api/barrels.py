@@ -107,8 +107,10 @@ def create_wpp(
                 continue
             elif not small and ("SMALL" in barrel.sku):
                 continue
-            # elif "MEDIUM" in barrel.sku:
-            #     continue
+            elif "MEDIUM" in barrel.sku:
+                continue
+            elif "LARGE" in barrel.sku: 
+                continue
             elif selling_large and ("LARGE" not in barrel.sku): 
                 continue
             else:
